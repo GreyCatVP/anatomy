@@ -16,7 +16,7 @@ interface SolidProps {
 
 export function Solid({ paths, tone = "hi", crease = "faint", halo = false, lit = false, flat = false, className, inner, children }: SolidProps) {
   return (
-    <g className={className ? `iso-solid ${className}` : "iso-solid"} data-lit={lit ? "" : undefined}>
+    <g className={className ? `iso-solid ${className}` : "iso-solid"} data-lit={lit ? "" : undefined} data-seamless={paths.seamless ? "" : undefined}>
       {halo ? <path className="iso-halo" d={paths.fill} /> : null}
       <path className="iso-fill" d={paths.fill} />
       {flat ? null : paths.shades.map((d, shade) => (d ? <path key={shade} className="iso-shade" data-shade={shade} d={d} /> : null))}
