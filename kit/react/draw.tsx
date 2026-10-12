@@ -79,15 +79,16 @@ export function Wire({ from, to, via = [], tone = "lo", dotted = false, dashed =
   );
 }
 
-export function Dots({ points, size = 0.5, tone = "mid", pulse = false }: { points: Flat[]; size?: number; tone?: Tone; pulse?: boolean }) {
+export function Dots({ points, size = 0.5, tone = "mid", pulse = false }: { points: Array<Flat | [number, number, number]>; size?: number; tone?: Tone; pulse?: boolean }) {
   return (
     <g className="iso-dots" data-tone={tone}>
-      {points.map(([x, y], index) => (
+      {points.map(([x, y, alpha], index) => (
         <circle
           key={index}
           cx={tenth(x)}
           cy={tenth(y)}
           r={size}
+          fillOpacity={alpha !== undefined && alpha < 1 ? Math.max(0, alpha) : undefined}
           data-pulse={pulse ? "" : undefined}
           style={pulse ? ({ "--pulse-at": `${(index * 137) % 1600}ms` } as React.CSSProperties) : undefined}
         />

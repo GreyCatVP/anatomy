@@ -132,7 +132,7 @@ From `kit/react/draw.tsx`, which is server-safe:
 - `<Solid paths tone crease halo lit flat className inner />` (`inner` is line markup placed under the outline, as for `solidSvg`)
 - `<Line d tone dotted dashed flow free />`
 - `<Wire from to via tone dotted dashed flow ends size />`
-- `<Dots points size tone pulse />`
+- `<Dots points size tone pulse />` (a point may carry opacity as `[x, y, alpha]`, as for `dotsSvg`)
 - `<FaceText transform size tone anchor>text</FaceText>`
 - `<IsoFigure width height label>` …svg children… `</IsoFigure>`
 - `<Plate fig title hint readout keys caption>` …figure… `</Plate>`
