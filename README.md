@@ -48,7 +48,7 @@ Then the agent builds that thing out of dozens of small, solid, shaded parts, pu
 npx skills add wheresryan22/anatomy -g
 ```
 
-By default the CLI asks which agents to set up. To target one agent only, pass `-a claude-code`, `-a opencode`, or `-a codex`. Then, in your agent:
+By default the CLI asks which of its supported agents to set up. To target one agent only, pass `-a claude-code`, `-a opencode`, or `-a codex`. Then, in your agent:
 
 ```text
 /anatomy explain how a token bucket rate limiter works, interactive
@@ -99,7 +99,7 @@ Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SK
 
 | | Command | Installs to |
 |---|---|---|
-| **skills CLI**, for you (any agent) | `npx skills add wheresryan22/anatomy -g` | your agent's user skills folder (the CLI asks which agents to set up) |
+| **skills CLI**, for you (supported agents) | `npx skills add wheresryan22/anatomy -g` | your agent's user skills folder (the CLI asks which of its supported agents to set up; any other agent: install manually via git or download below) |
 | **skills CLI**, for you (Claude Code) | `npx skills add wheresryan22/anatomy -g -a claude-code` | `~/.claude/skills/anatomy` |
 | **skills CLI**, for you (OpenCode) | `npx skills add wheresryan22/anatomy -g -a opencode` | `~/.config/opencode/skills/anatomy` |
 | **skills CLI**, for you (Codex) | `npx skills add wheresryan22/anatomy -g -a codex` | `~/.agents/skills/anatomy` |
@@ -187,7 +187,7 @@ Type `/anatomy` (in Codex, `$anatomy`) and say what the figure should explain:
 /anatomy explain how a token bucket rate limiter works, interactive
 ```
 
-You don't have to name the skill. Any compatible agent also loads it when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer.
+You don't have to name the skill. In agents that support automatic skill matching, it also loads when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer. Otherwise invoke it explicitly (`/anatomy`, or `$anatomy` in Codex).
 
 <details>
 <summary><b>More prompts</b>, from the skill's <a href="evals/evals.json">evals</a></summary>
@@ -287,7 +287,7 @@ anatomy/
 
 | | Needed for | Notes |
 |---|---|---|
-| **Any Agent Skills-compatible agent** ([Claude Code](https://code.claude.com/docs/en/overview), [OpenCode](https://opencode.ai/docs/skills/), [Codex](https://developers.openai.com/codex/skills), or others) | everything | The skill follows the open Agent Skills format with no agent-specific code, so any compatible agent loads it. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
+| **Any Agent Skills-compatible agent** ([Claude Code](https://code.claude.com/docs/en/overview), [OpenCode](https://opencode.ai/docs/skills/), [Codex](https://developers.openai.com/codex/skills), or others) | everything | The skill follows the open Agent Skills format with no agent-specific code, so any compatible agent loads it for figure work (building, kit, checks). One exception: publishing auto-attributes to Claude Code and reads time/tokens from Claude session logs — on other agents pass `--agent`/`--minutes`/`--tokens` explicitly. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
 | **Node.js 20.10+** | builds, kit, checks | Built-in modules only: nothing to `npm install`. The examples were rebuilt byte for byte on Node 20.19 and 22.11. On Node 20 the browser scripts restart themselves with `--experimental-websocket`. |
 | **Chrome or Chromium** | the checks | `capture.mjs`, `drive.mjs`, `lines.mjs` and `turn-check.mjs` look in the usual places on macOS, Linux and Windows and in Playwright's cache. Set `CHROME_PATH` for any other binary. They run it headless with WebGL on. |
 | **React 18+** | React output only | `kit/react/`, `examples/test-rig/` and `examples/spot-plate/`. |
