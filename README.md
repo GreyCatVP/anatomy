@@ -1,6 +1,6 @@
 <h1 align="center">Anatomy</h1>
 
-<p align="center"><b>A Claude skill that explains an idea by building it as a real, working object.</b><br>Also runs in OpenCode and Codex.<br>Crafted, interactive isometric figures with many small precise parts, in SVG, WebGL and 3D.</p>
+<p align="center"><b>An agent skill that explains an idea by building it as a real, working object.</b><br>Runs in any Agent Skills-compatible agent: Claude Code, OpenCode, Codex, and others.<br>Crafted, interactive isometric figures with many small precise parts, in SVG, WebGL and 3D.</p>
 
 <p align="center">
   <a href="https://code.claude.com/docs/en/skills"><img src="https://img.shields.io/badge/Claude_Code-skill-1b1b19?style=flat-square&logo=claude&logoColor=white" alt="Claude Code skill"></a>
@@ -38,23 +38,23 @@
 
 ---
 
-Ask Claude for a figure that explains a technical idea, and Anatomy has it invent a physical thing whose working *is* the concept. A cache key that skips work when nothing changed becomes a pin-tumbler lock that only turns when every pin matches. One GPU context serving many canvases becomes a gantry plotter whose single print head visits 16 wells.
+Ask your agent for a figure that explains a technical idea, and Anatomy has it invent a physical thing whose working *is* the concept. A cache key that skips work when nothing changed becomes a pin-tumbler lock that only turns when every pin matches. One GPU context serving many canvases becomes a gantry plotter whose single print head visits 16 wells.
 
-Then Claude builds that thing out of dozens of small, solid, shaded parts, puts it in a framed card with a title, a hint and a live readout, makes it move calmly under the pointer and the keyboard, and checks its own work by zooming in on every joint. Every number the figure shows comes from the same small model that moves its parts.
+Then the agent builds that thing out of dozens of small, solid, shaded parts, puts it in a framed card with a title, a hint and a live readout, makes it move calmly under the pointer and the keyboard, and checks its own work by zooming in on every joint. Every number the figure shows comes from the same small model that moves its parts.
 
 ## Quick start
 
 ```sh
-npx skills add wheresryan22/anatomy -g -a claude-code
+npx skills add wheresryan22/anatomy -g
 ```
 
-Then, in Claude Code:
+By default the CLI asks which agents to set up. To target one agent only, pass `-a claude-code`, `-a opencode`, or `-a codex`. Then, in your agent:
 
 ```text
 /anatomy explain how a token bucket rate limiter works, interactive
 ```
 
-For OpenCode or Codex, swap the agent: `-a opencode` or `-a codex`. OpenCode takes the same `/anatomy` command; in Codex, type `$anatomy`.
+In Codex, type `$anatomy` instead of `/anatomy`. Other agents use their own skill-invocation command for the installed `anatomy` skill.
 
 That's it. No API keys and nothing to `npm install`: the kit uses only Node's built-in modules.
 
@@ -95,10 +95,11 @@ Each figure is light or dark. Light is the theme the skill designs for first, sh
 
 ## Install
 
-Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SKILL.md` at its root. This repository is that folder. Pick one way in:
+Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SKILL.md` at its root. This repository is that folder. It contains no agent-specific code: the kit is plain Node with no dependencies, and the skill loads in any compatible agent. Pick one way in:
 
 | | Command | Installs to |
 |---|---|---|
+| **skills CLI**, for you (any agent) | `npx skills add wheresryan22/anatomy -g` | your agent's user skills folder (the CLI asks which agents to set up) |
 | **skills CLI**, for you (Claude Code) | `npx skills add wheresryan22/anatomy -g -a claude-code` | `~/.claude/skills/anatomy` |
 | **skills CLI**, for you (OpenCode) | `npx skills add wheresryan22/anatomy -g -a opencode` | `~/.config/opencode/skills/anatomy` |
 | **skills CLI**, for you (Codex) | `npx skills add wheresryan22/anatomy -g -a codex` | `~/.agents/skills/anatomy` |
@@ -114,7 +115,7 @@ Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SK
 
 <br>
 
-The [`skills`](https://github.com/vercel-labs/skills) CLI finds the `SKILL.md` at the root of this repository and installs it as `anatomy`. By default it installs into the current project and asks which agents to set up. `-g` installs it for your user, and `-a claude-code` sets up Claude Code only. Use `-a opencode` or `-a codex` for OpenCode or Codex only.
+The [`skills`](https://github.com/vercel-labs/skills) CLI finds the `SKILL.md` at the root of this repository and installs it as `anatomy`. By default it installs into the current project and asks which agents to set up. `-g` installs it for your user, and `-a` limits setup to one agent (e.g. `-a claude-code`, `-a opencode`, or `-a codex`).
 
 The CLI copies the whole repository, examples included (about 10 MB). It needs a recent Node.js: version 1.7.1 of the CLI asks for 22.20 or later.
 
@@ -125,7 +126,7 @@ The CLI copies the whole repository, examples included (about 10 MB). It needs a
 
 <br>
 
-Clone the repository into one of the skill folders, so that `SKILL.md` ends up at `<skills folder>/anatomy/SKILL.md`. For Claude Code use `~/.claude/skills/anatomy` or `.claude/skills/anatomy`. For OpenCode use `~/.config/opencode/skills/anatomy` or `.opencode/skills/anatomy`; OpenCode also reads the Claude Code and `.agents` folders. For Codex use `~/.agents/skills/anatomy` or `.agents/skills/anatomy`. For a project install, commit the folder so your team gets it too. To update later, `git pull` inside that folder.
+Clone the repository into one of the skill folders, so that `SKILL.md` ends up at `<skills folder>/anatomy/SKILL.md`. For Claude Code use `~/.claude/skills/anatomy` or `.claude/skills/anatomy`. For OpenCode use `~/.config/opencode/skills/anatomy` or `.opencode/skills/anatomy`; OpenCode also reads the Claude Code and `.agents` folders. For Codex use `~/.agents/skills/anatomy` or `.agents/skills/anatomy`. Any other Agent Skills-compatible agent: use its documented skills folder. For a project install, commit the folder so your team gets it too. To update later, `git pull` inside that folder.
 
 </details>
 
@@ -134,7 +135,7 @@ Clone the repository into one of the skill folders, so that `SKILL.md` ends up a
 
 <br>
 
-[Download the ZIP](https://github.com/wheresryan22/anatomy/archive/refs/heads/main.zip), unpack it, rename the folder from `anatomy-main` to `anatomy`, and move it into `~/.claude/skills/` (Claude Code), `~/.config/opencode/skills/` (OpenCode) or `~/.agents/skills/` (Codex).
+[Download the ZIP](https://github.com/wheresryan22/anatomy/archive/refs/heads/main.zip), unpack it, rename the folder from `anatomy-main` to `anatomy`, and move it into your agent's skills folder (`~/.claude/skills/` for Claude Code, `~/.config/opencode/skills/` for OpenCode, `~/.agents/skills/` for Codex).
 
 Or in one line on macOS or Linux:
 
@@ -150,7 +151,7 @@ mkdir -p ~/.config/opencode/skills/anatomy && curl -L https://github.com/wheresr
 
 </details>
 
-Claude Code picks up new skills in a running session. If the `skills` folder itself did not exist when the session started, run `/reload-skills`. OpenCode lists it as `/anatomy` in its TUI; restart OpenCode if it does not show. Codex lists it under `/skills` and runs it with `$anatomy`; restart Codex if it does not show.
+Your agent picks up new skills on its next session start. In Claude Code, if the `skills` folder itself did not exist when the session started, run `/reload-skills`. OpenCode lists it as `/anatomy` in its TUI; restart OpenCode if it does not show. Codex lists it under `/skills` and runs it with `$anatomy`; restart Codex if it does not show. Other agents: follow their skill-discovery docs.
 
 <details>
 <summary><b>Codex: if the browser checks are blocked</b></summary>
@@ -186,7 +187,7 @@ Type `/anatomy` (in Codex, `$anatomy`) and say what the figure should explain:
 /anatomy explain how a token bucket rate limiter works, interactive
 ```
 
-You don't have to name the skill. Claude also loads it when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer. OpenCode and Codex do the same.
+You don't have to name the skill. Any compatible agent also loads it when you ask for an isometric illustration, an explanatory figure for docs, a blog post or a landing page, or an interactive explainer.
 
 <details>
 <summary><b>More prompts</b>, from the skill's <a href="evals/evals.json">evals</a></summary>
@@ -238,10 +239,10 @@ Each framework-free example has a Node build script that writes standalone pages
 
 ## How it works
 
-- **[`SKILL.md`](SKILL.md)** is what Claude reads. It sets the workflow: collect the true numbers first, invent the object, write a parts list, plan the world, build the geometry once with the kit, paint back to front, frame it, make it live, and then verify it like a critic. It also holds the craft rules in short form.
+- **[`SKILL.md`](SKILL.md)** is what the agent reads. It sets the workflow: collect the true numbers first, invent the object, write a parts list, plan the world, build the geometry once with the kit, paint back to front, frame it, make it live, and then verify it like a critic. It also holds the craft rules in short form.
 - **[`kit/`](kit)** is the drawing library the figures are built from: the isometric camera, solids and a parts library (`iso-kit`), round parts on any axis (`lathe.mjs`), pipes and cables (`tube.mjs`), the WebGL layer (`gl.mjs`), the 3D runtime (`turn*.mjs`), and React components (`react/`). Apart from React for those components, it has no dependencies.
-- **[`references/`](references)** are the long-form guides Claude opens when it needs them: craft, the kit API, motion, React, verification, WebGL, a design walkthrough and the 3D mode.
-- **Verification.** [`kit/audit.mjs`](kit/audit.mjs) proves the geometry: nothing passes through anything, every end sits on a mount, and every overlap is drawn in depth order (`node build.mjs --audit`). In headless Chrome, [`scripts/capture.mjs`](scripts/capture.mjs) and [`scripts/drive.mjs`](scripts/drive.mjs) take screenshots, close-ups and slowed-down contact sheets, [`scripts/lines.mjs`](scripts/lines.mjs) fails any line that ends in mid-air, and [`scripts/turn-check.mjs`](scripts/turn-check.mjs) checks 3D figures. The skill tells Claude to read every PNG it makes.
+- **[`references/`](references)** are the long-form guides the agent opens when it needs them: craft, the kit API, motion, React, verification, WebGL, a design walkthrough and the 3D mode.
+- **Verification.** [`kit/audit.mjs`](kit/audit.mjs) proves the geometry: nothing passes through anything, every end sits on a mount, and every overlap is drawn in depth order (`node build.mjs --audit`). In headless Chrome, [`scripts/capture.mjs`](scripts/capture.mjs) and [`scripts/drive.mjs`](scripts/drive.mjs) take screenshots, close-ups and slowed-down contact sheets, [`scripts/lines.mjs`](scripts/lines.mjs) fails any line that ends in mid-air, and [`scripts/turn-check.mjs`](scripts/turn-check.mjs) checks 3D figures. The skill tells the agent to read every PNG it makes.
 
 <details>
 <summary><b>Repository layout</b></summary>
@@ -265,7 +266,7 @@ anatomy/
 │   ├── turn-audit.mjs        the 3D orbit audit
 │   └── turn-fixed.mjs, canvas-painter.mjs, gl-shared.mjs
 │                             experimental variants, not yet documented or used by the examples
-├── references/               long-form guides Claude reads as needed
+├── references/               long-form guides the agent reads as needed
 │   ├── craft.md  kit.md  motion.md  react.md
 │   └── verify.md  webgl.md  walkthrough.md  3d.md
 ├── scripts/                  headless Chrome checks and build helpers
@@ -286,7 +287,7 @@ anatomy/
 
 | | Needed for | Notes |
 |---|---|---|
-| **[Claude Code](https://code.claude.com/docs/en/overview)**, or [OpenCode](https://opencode.ai/docs/skills/) or [Codex](https://developers.openai.com/codex/skills) | everything | The skill is written for Claude Code and follows the open Agent Skills format, so OpenCode and Codex load it too. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
+| **Any Agent Skills-compatible agent** ([Claude Code](https://code.claude.com/docs/en/overview), [OpenCode](https://opencode.ai/docs/skills/), [Codex](https://developers.openai.com/codex/skills), or others) | everything | The skill follows the open Agent Skills format with no agent-specific code, so any compatible agent loads it. In Codex, the browser checks start Chrome; if its sandbox blocks that, allow it for those commands. |
 | **Node.js 20.10+** | builds, kit, checks | Built-in modules only: nothing to `npm install`. The examples were rebuilt byte for byte on Node 20.19 and 22.11. On Node 20 the browser scripts restart themselves with `--experimental-websocket`. |
 | **Chrome or Chromium** | the checks | `capture.mjs`, `drive.mjs`, `lines.mjs` and `turn-check.mjs` look in the usual places on macOS, Linux and Windows and in Playwright's cache. Set `CHROME_PATH` for any other binary. They run it headless with WebGL on. |
 | **React 18+** | React output only | `kit/react/`, `examples/test-rig/` and `examples/spot-plate/`. |

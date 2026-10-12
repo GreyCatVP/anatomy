@@ -10,20 +10,20 @@ You need:
 
 - **Node.js 20.10 or later.** Nothing to install: the kit, the build scripts and the checks use only Node's built-in modules.
 - **Google Chrome or Chromium** for the browser checks. The scripts find it in the usual places; otherwise set `CHROME_PATH` to the binary.
-- **Claude Code**, OpenCode or Codex, to try the skill itself.
+- **Any Agent Skills-compatible agent** (Claude Code, OpenCode, Codex, or others), to try the skill itself.
 
 ```sh
 git clone https://github.com/wheresryan22/anatomy.git
 cd anatomy
 ```
 
-To use your working copy as the skill while you change it, link it into your personal skills folder (move any installed copy out of the way first):
+To use your working copy as the skill while you change it, link it into your personal skills folder (move any installed copy out of the way first). Use the folder for your agent:
 
 ```sh
 ln -s "$PWD" ~/.claude/skills/anatomy
 ```
 
-For OpenCode, or for Codex:
+For OpenCode, for Codex, or for any other compatible agent (use its documented skills folder):
 
 ```sh
 ln -s "$PWD" ~/.config/opencode/skills/anatomy
@@ -140,7 +140,7 @@ These come from [`SKILL.md`](SKILL.md) and [`references/`](references). A pull r
 
 ## Changing the skill's text
 
-`SKILL.md` and `references/` are instructions Claude follows, so keep them short, exact and in the same plain voice. When you change a kit API, update [`references/kit.md`](references/kit.md) in the same pull request. When you add an example, give it a folder under `examples/` with a `build.mjs` that writes `<name>.html` and, with `--light`, `<name>-light.html`; add it to the list in `SKILL.md`, the table in the README and the build list in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+`SKILL.md` and `references/` are instructions the agent follows, so keep them short, exact and in the same plain voice. When you change a kit API, update [`references/kit.md`](references/kit.md) in the same pull request. When you add an example, give it a folder under `examples/` with a `build.mjs` that writes `<name>.html` and, with `--light`, `<name>-light.html`; add it to the list in `SKILL.md`, the table in the README and the build list in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Pull requests
 
