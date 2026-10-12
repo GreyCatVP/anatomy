@@ -45,8 +45,10 @@ Then Claude builds that thing out of dozens of small, solid, shaded parts, puts 
 ## Quick start
 
 ```sh
-npx skills add wheresryan22/anatomy -g -a claude-code
+npx skills add wheresryan22/anatomy -g
 ```
+
+The CLI asks which agents to set up (Claude Code, Antigravity, OpenCode, Codex). To skip the question, add `-a claude-code`, `-a antigravity`, `-a opencode`, or `-a codex`.
 
 Then, in Claude Code:
 
@@ -54,7 +56,7 @@ Then, in Claude Code:
 /anatomy explain how a token bucket rate limiter works, interactive
 ```
 
-For OpenCode or Codex, swap the agent: `-a opencode` or `-a codex`. OpenCode takes the same `/anatomy` command; in Codex, type `$anatomy`.
+For Antigravity, OpenCode, or Codex, target that agent: `-a antigravity`, `-a opencode`, or `-a codex`. Antigravity and OpenCode take the same `/anatomy` command; in Codex, type `$anatomy`.
 
 That's it. No API keys and nothing to `npm install`: the kit uses only Node's built-in modules.
 
