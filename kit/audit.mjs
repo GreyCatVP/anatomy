@@ -1368,7 +1368,7 @@ const multiply = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1]
 function matrixOf(text) {
   let m = [1, 0, 0, 1, 0, 0];
   if (!text) return m;
-  for (const [, kind, args] of text.matchAll(/(matrix|translate|scale|rotate)\s*\(([^)]*)\)/g)) {
+  for (const [, kind, args] of text.matchAll(/(matrix|translate|scale|rotate|skewX|skewY)\s*\(([^)]*)\)/g)) {
     const v = (args.match(/-?(?:\d+\.?\d*|\.\d+)(?:e[-+]?\d+)?/gi) ?? []).map(Number);
     let n = [1, 0, 0, 1, 0, 0];
     if (kind === "matrix" && v.length === 6) n = v;
@@ -1379,6 +1379,8 @@ function matrixOf(text) {
       const [cx, cy] = [v[1] ?? 0, v[2] ?? 0];
       n = multiply(multiply([1, 0, 0, 1, cx, cy], [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0]), [1, 0, 0, 1, -cx, -cy]);
     }
+    else if (kind === "skewX") n = [1, 0, Math.tan((v[0] ?? 0) * Math.PI / 180), 1, 0, 0];
+    else if (kind === "skewY") n = [1, Math.tan((v[0] ?? 0) * Math.PI / 180), 0, 1, 0, 0];
     m = multiply(m, n);
   }
   return m;
@@ -1434,7 +1436,7 @@ function pointsOfShape(tag, attrs) {
     return [[num("cx") - r, num("cy") - ry], [num("cx") + r, num("cy") + ry]];
   }
   if (tag === "line") return [[num("x1"), num("y1")], [num("x2"), num("y2")]];
-  if (tag === "rect") return [[num("x"), num("y")], [num("x") + num("width"), num("y") + num("height")]];
+  if (tag === "rect") return cornersOfBox([num("x"), num("y"), num("x") + num("width"), num("y") + num("height")]);
   if (tag === "polyline" || tag === "polygon") {
     const v = (get("points") ?? "").match(NUMBER)?.map(Number) ?? [];
     const out = [];
@@ -1452,6 +1454,18 @@ const boxOfPoints = (points, m) => {
     box = box ? [Math.min(box[0], px), Math.min(box[1], py), Math.max(box[2], px), Math.max(box[3], py)] : [px, py, px, py];
   }
   return box;
+};
+const cornersOfBox = ([x0, y0, x1, y1]) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+const boxOfShape = (tag, attrs, m) => {
+  if (tag !== "circle" && tag !== "ellipse") return boxOfPoints(pointsOfShape(tag, attrs), m);
+  const num = (name) => Number((attrs.match(new RegExp(`(?:^|\\s)${name}="([^"]*)"`)) ?? [])[1] ?? 0);
+  const rx = tag === "circle" ? num("r") : num("rx");
+  const ry = tag === "circle" ? rx : num("ry");
+  const x = m[0] * num("cx") + m[2] * num("cy") + m[4];
+  const y = m[1] * num("cx") + m[3] * num("cy") + m[5];
+  const dx = Math.hypot(m[0] * rx, m[2] * ry);
+  const dy = Math.hypot(m[1] * rx, m[3] * ry);
+  return [x - dx, y - dy, x + dx, y + dy];
 };
 const unionBox = (a, b) => (!a ? b : !b ? a : [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])]);
 const meetBox = (a, b) => (!a || !b ? a ?? null : [Math.max(a[0], b[0]), Math.max(a[1], b[1]), Math.min(a[2], b[2]), Math.min(a[3], b[3])]);
@@ -1471,7 +1485,7 @@ export function markupBox(svg) {
         clipId = null;
         continue;
       }
-      clips.set(clipId, unionBox(clips.get(clipId), boxOfPoints(pointsOfShape(tag, attrs), matrixOf((attrs.match(/transform="([^"]*)"/) ?? [])[1]))));
+      clips.set(clipId, unionBox(clips.get(clipId), boxOfShape(tag, attrs, matrixOf((attrs.match(/transform="([^"]*)"/) ?? [])[1]))));
     }
   }
   const stack = [{ m: [1, 0, 0, 1, 0, 0], clip: null, skip: false }];
@@ -1484,10 +1498,10 @@ export function markupBox(svg) {
     }
     const m = multiply(top.m, matrixOf((attrs.match(/transform="([^"]*)"/) ?? [])[1]));
     const ref = (attrs.match(/clip-path="url\(#([^)]*)\)"/) ?? [])[1];
-    const own = ref && clips.get(ref) ? boxOfPoints([[clips.get(ref)[0], clips.get(ref)[1]], [clips.get(ref)[2], clips.get(ref)[3]]], m) : null;
+    const own = ref && clips.get(ref) ? boxOfPoints(cornersOfBox(clips.get(ref)), m) : null;
     const frame = { m, clip: own ? meetBox(top.clip ?? own, own) : top.clip, skip: top.skip || ["defs", "clipPath", "mask", "linearGradient", "radialGradient", "pattern", "text", "title"].includes(tag) || /class="[^"]*iso-halo/.test(attrs) };
     if (!frame.skip) {
-      const shape = boxOfPoints(pointsOfShape(tag, attrs), m);
+      const shape = boxOfShape(tag, attrs, m);
       if (shape) box = unionBox(box, frame.clip ? meetBox(shape, frame.clip) : shape);
     }
     if (!self) stack.push(frame);
