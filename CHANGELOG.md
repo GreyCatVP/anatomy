@@ -4,6 +4,13 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Anatoly
+
+- Forked from Anatomy as Anatoly: machines installed by Anatoly, built from junk and falling apart when used. `SKILL.md` is Anatoly's; Anatomy's skill file is kept as `ANATOMY.md`, and Anatoly's references are in `references/anatoly/`.
+- Broken by default: a plain request for a machine gets the junk build and a collapse on every use; "subtle" asks for a few bodges and a first use that works; "clean" builds plain Anatomy.
+- `kit/anatoly.mjs` (ledger, bodge geometry, failure timing, and `tipAt`, `rockAt`, `layFlat`, `turnAbout` for the collapse), `kit/anatoly.css`, `scripts/inline-anatoly.mjs` and their tests.
+- `examples/raptor-anatoly`: the Raptor 2 on a stand of logs, rope and sticks, with its nozzle taped on.
+
 ### Added
 
 - Antigravity support, alongside Claude Code, OpenCode and Codex. Documented user and project installation paths in the README and CONTRIBUTING, updated SKILL.md compatibility, and added Antigravity to the bug report form.

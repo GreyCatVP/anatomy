@@ -64,6 +64,12 @@ jobs:
           node examples/raptor-engine/build.mjs
           node examples/raptor-engine/build.mjs --light
 
+      - name: Raptor, as installed by Anatoly
+        run: |
+          node examples/raptor-anatoly/build.mjs
+          node examples/raptor-anatoly/build.mjs --light
+          node examples/raptor-anatoly/build.mjs --honest
+
       - name: Committed pages are unchanged
         run: |
           git status --short

@@ -1,0 +1,24 @@
+.iso{--anatoly-repair:#4f86d9;--anatoly-tag:#e0574a}
+.iso[data-theme="light"]{--anatoly-repair:#2c64c4;--anatoly-tag:#c8372b}
+.iso-solid.an-repair>.iso-fill{fill:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-paper))}
+.iso-solid.an-repair>.iso-top{fill:color-mix(in oklab,var(--anatoly-repair) 48%,var(--anatomy-top))}
+.iso-solid.an-repair>.iso-shade[data-shade="0"]{fill:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-0))}
+.iso-solid.an-repair>.iso-shade[data-shade="1"]{fill:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-1))}
+.iso-solid.an-repair>.iso-shade[data-shade="2"]{fill:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-2))}
+.iso-solid.an-repair>.iso-shade[data-shade="3"]{fill:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-3))}
+.iso-solid.an-repair[data-seamless]>.iso-shade[data-shade="0"]{stroke:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-0))}
+.iso-solid.an-repair[data-seamless]>.iso-shade[data-shade="1"]{stroke:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-1))}
+.iso-solid.an-repair[data-seamless]>.iso-shade[data-shade="2"]{stroke:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-2))}
+.iso-solid.an-repair[data-seamless]>.iso-shade[data-shade="3"]{stroke:color-mix(in oklab,var(--anatoly-repair) 62%,var(--anatomy-shade-3))}
+.iso-solid.an-repair[data-seamless]>.iso-top{stroke:color-mix(in oklab,var(--anatoly-repair) 48%,var(--anatomy-top))}
+.iso-solid.an-repair>.iso-edge{stroke:color-mix(in oklab,var(--anatoly-repair) 70%,var(--anatomy-hi))}
+.iso-solid.an-tag>.iso-fill{fill:color-mix(in oklab,var(--anatoly-tag) 62%,var(--anatomy-paper))}
+.iso-solid.an-tag>.iso-top{fill:color-mix(in oklab,var(--anatoly-tag) 48%,var(--anatomy-top))}
+.iso-solid.an-tag>.iso-shade[data-shade="0"]{fill:color-mix(in oklab,var(--anatoly-tag) 62%,var(--anatomy-shade-0))}
+.iso-solid.an-tag>.iso-shade[data-shade="1"]{fill:color-mix(in oklab,var(--anatoly-tag) 62%,var(--anatomy-shade-1))}
+.iso-solid.an-tag>.iso-shade[data-shade="2"]{fill:color-mix(in oklab,var(--anatoly-tag) 62%,var(--anatomy-shade-2))}
+.iso-solid.an-tag>.iso-shade[data-shade="3"]{fill:color-mix(in oklab,var(--anatoly-tag) 62%,var(--anatomy-shade-3))}
+.iso-solid.an-tag>.iso-edge{stroke:color-mix(in oklab,var(--anatoly-tag) 70%,var(--anatomy-hi))}
+.iso-line.an-repair{stroke:color-mix(in oklab,var(--anatoly-repair) 70%,var(--anatomy-hi))}
+.an-repair .tb-ring{stroke:color-mix(in oklab,var(--anatoly-repair) 80%,var(--anatomy-hi))}
+.an-hand .iso-face-text{font-style:italic;letter-spacing:-.02em}
