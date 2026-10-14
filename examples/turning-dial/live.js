@@ -312,7 +312,9 @@ const release = (event) => {
   stage.removeAttribute("data-drag");
   try {
     stage.releasePointerCapture(event.pointerId);
-  } catch {}
+  } catch {
+    // Pointer capture may have already been released by the browser
+  }
 };
 stage.addEventListener("pointerup", release);
 stage.addEventListener("pointercancel", release);

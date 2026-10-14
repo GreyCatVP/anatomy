@@ -8,6 +8,10 @@ import { LINE_ENDS } from "./line-ends.mjs";
 
 if (typeof WebSocket === "undefined" && !process.execArgv.includes("--experimental-websocket")) {
   const child = spawn(process.execPath, ["--experimental-websocket", ...process.argv.slice(1)], { stdio: "inherit" });
+  child.on("error", (err) => {
+    console.error(`Failed to spawn child process: ${err.message}`);
+    process.exit(1);
+  });
   child.on("exit", (code) => process.exit(code ?? 1));
 } else {
   await main();
@@ -99,9 +103,21 @@ async function main() {
     else if (arg === "--reduced") options.reduced = true;
     else if (arg === "--theme") options.theme = argv[++index];
     else if (arg === "--no-webgl") options.noWebgl = true;
-    else if (arg === "--preload") options.preload = readFileSync(argv[++index], "utf8");
-    else if (arg === "--actions") options.actions = JSON.parse(readFileSync(argv[++index], "utf8"));
-    else rest.push(arg);
+    else if (arg === "--preload") {
+      const file = argv[++index];
+      try {
+        options.preload = readFileSync(file, "utf8");
+      } catch (err) {
+        throw new Error(`Failed to read --preload file "${file}": ${err.message}`);
+      }
+    } else if (arg === "--actions") {
+      const file = argv[++index];
+      try {
+        options.actions = JSON.parse(readFileSync(file, "utf8"));
+      } catch (err) {
+        throw new Error(`Failed to read or parse --actions file "${file}": ${err.message}`);
+      }
+    } else rest.push(arg);
   }
   const [target, script] = rest;
   const actions = options.actions ?? JSON.parse(script ?? "[]");
@@ -117,13 +133,21 @@ async function main() {
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-drive-"));
-  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const env = { ...process.env };
+  if (process.platform === "linux") delete env.DISPLAY;
+  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"], { env });
+  chrome.on("error", (err) => {
+    console.error(`Failed to launch browser: ${err.message}`);
+    finish(1);
+  });
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");
     try {
       rmSync(profile, { recursive: true, force: true });
-    } catch {}
+    } catch {
+      // Best-effort cleanup of temporary browser profile directory
+    }
     process.exit(code);
   };
   try {

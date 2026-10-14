@@ -38,7 +38,12 @@ function chromePath() {
 
 async function browser(target, { width, height, scale, throttle, noWebgl }) {
   const profile = mkdtempSync(join(tmpdir(), "turn-check-"));
-  const chrome = spawn(chromePath(), ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const env = { ...process.env };
+  if (process.platform === "linux") delete env.DISPLAY;
+  const chrome = spawn(chromePath(), ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"], { env });
+  chrome.on("error", (err) => {
+    console.error(`Failed to launch browser: ${err.message}`);
+  });
   const port = await chromePort(chrome, profile);
   const page = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const socket = new WebSocket(page.webSocketDebuggerUrl);
@@ -79,7 +84,9 @@ async function browser(target, { width, height, scale, throttle, noWebgl }) {
     chrome.kill("SIGKILL");
     try {
       rmSync(profile, { recursive: true, force: true });
-    } catch {}
+    } catch {
+      // Best-effort cleanup of temporary browser profile directory
+    }
   };
   return { send, evaluate, close, problems };
 }
@@ -502,7 +509,14 @@ async function main() {
   if (argv.includes("--pops") && (!Number.isFinite(fine) || fine <= 0 || fine > 180)) throw new Error("--fine must be a finite number greater than 0 and at most 180 degrees");
   const out = value("--out", null);
   const statesFile = value("--states", null);
-  const states = statesFile ? JSON.parse(readFileSync(statesFile, "utf8")) : null;
+  let states = null;
+  if (statesFile) {
+    try {
+      states = JSON.parse(readFileSync(statesFile, "utf8"));
+    } catch (err) {
+      throw new Error(`Failed to read or parse --states file "${statesFile}": ${err.message}`);
+    }
+  }
   if (statesFile && (!Array.isArray(states) || !states.length)) throw new Error("--states must contain a nonempty JSON list of poses");
   const page = await browser(target, options);
   const labelOf = (state, index) => (typeof state === "number" ? `${state.toFixed(3)}°` : `state ${index}`);
@@ -637,6 +651,10 @@ async function main() {
 
 if (typeof WebSocket === "undefined" && !process.execArgv.includes("--experimental-websocket")) {
   const child = spawn(process.execPath, ["--experimental-websocket", ...process.argv.slice(1)], { stdio: "inherit" });
+  child.on("error", (err) => {
+    console.error(`Failed to spawn child process: ${err.message}`);
+    process.exit(1);
+  });
   child.on("exit", (code) => process.exit(code ?? 1));
 } else {
   await main();

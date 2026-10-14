@@ -47,7 +47,9 @@ function entriesOf(file) {
     try {
       const entry = JSON.parse(line);
       if (entry && typeof entry.timestamp === "string") out.push(entry);
-    } catch {}
+    } catch {
+      // Ignore partially-written or non-JSON trailing lines in NDJSON session log
+    }
   }
   return out;
 }

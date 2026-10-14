@@ -7,6 +7,10 @@ import { pathToFileURL } from "node:url";
 
 if (typeof WebSocket === "undefined" && !process.execArgv.includes("--experimental-websocket")) {
   const child = spawn(process.execPath, ["--experimental-websocket", ...process.argv.slice(1)], { stdio: "inherit" });
+  child.on("error", (err) => {
+    console.error(`Failed to spawn child process: ${err.message}`);
+    process.exit(1);
+  });
   child.on("exit", (code) => process.exit(code ?? 1));
 } else {
   await main();
@@ -101,6 +105,8 @@ async function main() {
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-capture-"));
+  const env = { ...process.env };
+  if (process.platform === "linux") delete env.DISPLAY;
   const chrome = spawn(binary, [
     "--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []),
     "--remote-debugging-port=0",
@@ -112,13 +118,19 @@ async function main() {
     "--enable-unsafe-swiftshader",
     "--ignore-gpu-blocklist",
     "about:blank",
-  ]);
+  ], { env });
+  chrome.on("error", (err) => {
+    console.error(`Failed to launch browser: ${err.message}`);
+    finish(1);
+  });
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");
     try {
       rmSync(profile, { recursive: true, force: true });
-    } catch {}
+    } catch {
+      // Best-effort cleanup of temporary browser profile directory
+    }
     process.exit(code);
   };
   try {
