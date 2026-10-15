@@ -101,7 +101,7 @@ async function main() {
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-capture-"));
-  const chrome = spawn(binary, [
+  const chromeArgs = [
     "--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []),
     "--remote-debugging-port=0",
     `--user-data-dir=${profile}`,
@@ -112,7 +112,9 @@ async function main() {
     "--enable-unsafe-swiftshader",
     "--ignore-gpu-blocklist",
     "about:blank",
-  ]);
+  ];
+  const isJs = /\.[cm]?js$/i.test(binary);
+  const chrome = isJs ? spawn(process.execPath, [binary, ...chromeArgs]) : spawn(binary, chromeArgs);
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");

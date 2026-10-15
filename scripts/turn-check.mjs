@@ -37,8 +37,15 @@ function chromePath() {
 }
 
 async function browser(target, { width, height, scale, throttle, noWebgl }) {
+  const binary = chromePath();
+  if (!binary) {
+    console.error("No Chrome found. Set CHROME_PATH to a Chrome or Chromium binary.");
+    process.exit(1);
+  }
   const profile = mkdtempSync(join(tmpdir(), "turn-check-"));
-  const chrome = spawn(chromePath(), ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const chromeArgs = ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"];
+  const isJs = /\.[cm]?js$/i.test(binary);
+  const chrome = isJs ? spawn(process.execPath, [binary, ...chromeArgs]) : spawn(binary, chromeArgs);
   const port = await chromePort(chrome, profile);
   const page = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const socket = new WebSocket(page.webSocketDebuggerUrl);
