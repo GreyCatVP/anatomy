@@ -66,13 +66,15 @@ export function measure(files, { prompt = "" } = {}) {
   const [main, ...side] = files;
   const mainEntries = entriesOf(main).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   const asks = mainEntries.filter((entry) => entry.type === "user" && !entry.isSidechain && textOf(entry));
+  const isPublishRequest = (entry) => /\bpublish\b/i.test(textOf(entry)) && /\b(community|gallery)\b/i.test(textOf(entry));
+  const figureAsks = asks.filter((entry) => !isPublishRequest(entry));
   const head = squash(prompt).slice(0, 48);
   const start =
-    (head && asks.find((entry) => squash(textOf(entry)).includes(head))) ??
-    asks.find((entry) => /\/anatomy\b|\banatomy\b/i.test(textOf(entry))) ??
+    (head && figureAsks.findLast((entry) => squash(textOf(entry)).includes(head))) ??
+    figureAsks.findLast((entry) => /\/anatomy\b|\banatomy\b/i.test(textOf(entry))) ??
     mainEntries[0];
   if (!start) return null;
-  const end = asks.find((entry) => entry.timestamp > start.timestamp && /\bpublish\b/i.test(textOf(entry)) && /\b(community|gallery)\b/i.test(textOf(entry)));
+  const end = asks.find((entry) => entry.timestamp > start.timestamp && isPublishRequest(entry));
   const from = start.timestamp;
   const to = end?.timestamp ?? "￿";
   const inWindow = (entry) => entry.timestamp >= from && entry.timestamp < to;
