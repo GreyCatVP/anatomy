@@ -14,10 +14,9 @@ for (const name of ["capture", "drive", "turn-check"]) {
     const directory = await mkdtemp(join(tmpdir(), "anatomy-chrome-startup-"));
     let profile;
     try {
-      const binary = join(directory, "chrome");
+      const binary = join(directory, "mock-chrome.mjs");
       const receipt = join(directory, "profile.txt");
-      await writeFile(binary, '#!/bin/sh\nfor arg in "$@"; do\n  case "$arg" in --user-data-dir=*) printf "%s" "${arg#--user-data-dir=}" > "$ANATOMY_PROFILE_RECEIPT";; esac\ndone\nexit 7\n');
-      await chmod(binary, 0o755);
+      await writeFile(binary, 'import { writeFileSync } from "node:fs";\nfor (const arg of process.argv.slice(2)) {\n  if (arg.startsWith("--user-data-dir=")) writeFileSync(process.env.ANATOMY_PROFILE_RECEIPT, arg.slice(16));\n}\nprocess.exit(7);\n');
       const started = performance.now();
       let result;
       try {
