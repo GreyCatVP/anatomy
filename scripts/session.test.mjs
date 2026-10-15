@@ -38,6 +38,28 @@ test("time and tokens cover the figure's request up to the publish request", () 
   assert.equal(result.to, at(80));
 });
 
+test("a repeated figure prompt measures its latest request", () => {
+  const root = mkdtempSync(join(tmpdir(), "session-repeat-"));
+  const id = "0123abcd-0000-0000-0000-000000000001";
+  mkdirSync(join(root, "-work"), { recursive: true });
+  writeFileSync(join(root, "-work", `${id}.jsonl`), lines([
+    user(5, "/anatomy draw a dial"),
+    reply(6, "first", 100, 100),
+    user(20, "publish this figure to the community gallery"),
+    user(90, "/anatomy draw a dial"),
+    reply(92, "second", 200, 300),
+    user(100, "publish this Anatomy figure to the community gallery"),
+  ]));
+  const result = fromThisSession({ prompt: "/anatomy draw a dial", env: { CLAUDE_CODE_SESSION_ID: id }, root });
+  assert.equal(result.from, at(90));
+  assert.equal(result.to, at(100));
+  assert.equal(result.tokens, 1500);
+  assert.equal(result.minutes, 2);
+  const fallback = fromThisSession({ prompt: "a paraphrased request", env: { CLAUDE_CODE_SESSION_ID: id }, root });
+  assert.equal(fallback.from, at(90));
+  assert.equal(fallback.to, at(100));
+});
+
 test("no session, no numbers", () => {
   assert.equal(fromThisSession({ env: {} }), null);
   assert.equal(measure([]), null);
