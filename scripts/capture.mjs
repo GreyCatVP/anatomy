@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { resolveTarget } from "./safe-target.mjs";
 
 if (typeof WebSocket === "undefined" && !process.execArgv.includes("--experimental-websocket")) {
   const child = spawn(process.execPath, ["--experimental-websocket", ...process.argv.slice(1)], { stdio: "inherit" });
@@ -32,6 +32,7 @@ function usage() {
                       saved as name-<ms>.png; a capture takes 60-200 ms, so delays closer than that run late
   --reduced           emulate prefers-reduced-motion: reduce
   --theme <dark|light>  emulate prefers-color-scheme
+  --allow-remote      open a non-local http(s) page (default: only files and localhost)
 
 Prints the clip box, console errors, uncaught exceptions and whether the page scrolls sideways.`);
 }
@@ -54,6 +55,7 @@ function parse(argv) {
     else if (arg === "--key") options.keys = next().split(",");
     else if (arg === "--times") options.times = next().split(",").map(Number);
     else if (arg === "--reduced") options.reduced = true;
+    else if (arg === "--allow-remote") options.allowRemote = true;
     else if (arg === "--theme") options.theme = next();
     else if (arg === "--help" || arg === "-h") options.help = true;
     else rest.push(arg);
@@ -93,7 +95,7 @@ async function main() {
     usage();
     process.exit(options.help ? 0 : 1);
   }
-  const url = /^https?:|^file:/.test(options.target) ? options.target : pathToFileURL(resolve(options.target)).href;
+  const { url, isFile } = resolveTarget(options.target, options.allowRemote);
   const out = resolve(options.out ?? "capture.png");
   const binary = chromePath();
   if (!binary) {
@@ -108,7 +110,7 @@ async function main() {
     "--no-first-run",
     "--no-default-browser-check",
     "--hide-scrollbars",
-    "--allow-file-access-from-files",
+    ...(isFile ? ["--allow-file-access-from-files"] : []),
     "--enable-unsafe-swiftshader",
     "--ignore-gpu-blocklist",
     "about:blank",
