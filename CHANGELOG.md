@@ -6,6 +6,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Added
 
+- `scripts/grab-canvas.mjs`: save what a WebGL canvas actually drew, and `--probe` for the numbers. A headless screenshot of a shader page can omit the canvas entirely, because `kit/gl.mjs` creates its context with `preserveDrawingBuffer: false`; this reads the buffer back in the frame it was drawn, crops and scales it inside the page so the encoded PNG survives one line of driver output, and refuses to save a truncated file.
 - Antigravity support, alongside Claude Code, OpenCode and Codex. Documented user and project installation paths in the README and CONTRIBUTING, updated SKILL.md compatibility, and added Antigravity to the bug report form.
 
 ### Changed
@@ -14,6 +15,8 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Fixed
 
+- `references/webgl.md` no longer claims that `capture.mjs` is enough for still shots of a shader page. It also states which number to judge a premultiplied-alpha effect by: the colour channels do not say how bright something looks, so the dark build is read on `meanColour` and the light build on `meanAlpha`.
+- `references/kit.md` gains a **Silent failures** table for four traps that raise no error and only produce a wrong picture: `tube(..., { gaps })` taking a flat list of `[lo, hi]` pairs and silently dropping a nested one, `settle()` diverging when `tau` is far below `dt`, `glCamera()` having no right vector, and audit screen coordinates being viewBox units rather than CSS pixels.
 - `capture.mjs` waits for the page to load before it touches it, even with `--wait 0`, and gives up with an error when Chrome leaves a request unanswered for 60 s instead of hanging.
 - `drive.mjs` `until` times a condition inside the page, so one that is already true passes however short the wait, even on a slow machine; a promise that never settles still times out.
 - Start headless Chrome on Windows from an elevated terminal: `capture.mjs`, `drive.mjs` and `turn-check.mjs` pass `--do-not-de-elevate` there. Chrome otherwise relaunches itself without the elevation, the process the script started exits with code 0, and the check stops with `Chrome exited before startup: 0` while the relaunched browser stays running.

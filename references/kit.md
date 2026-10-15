@@ -417,3 +417,14 @@ import * as TA from "../../kit/turn-audit.mjs";
 | `orbitOrExit(T, R, P, { flag = "--audit", argv, sweep, clips, poses, crowd, cover, fittings, quick, only, log })` | Runs `orbit` when the flag is present, prints the report, sets exit code 1 on any failure. Ends `turn audit passed` only for a full run; with `only` it ends `turn audit partial`, with `quick` `turn audit quick` (`3d.md`, section 13). |
 | `orbit(T, R, P, options)`, `orbitReport(result)`, `orbitFailures(result)` | The checks, the text, the count. `result.skipped` lists the lines `only` left out (printed `skipped`); `result.quick` is set for a quick run. |
 | `posed(shape, pose)`, `eventsOf(T, layer)` | A recorded shape moved by a group pose; a layer's edge-on angles. |
+
+### Silent failures
+
+Four traps that produce no error, only a wrong picture. Each was found the hard way; check the effect, not the call.
+
+| Trap | What happens | Check |
+|---|---|---|
+| `tube(..., { gaps })` takes a **flat** list of `[lo, hi]` arc-length pairs | A nested pair (`[[a,b],[c,d]]` as one element) is destructured into arrays, `Math.min` returns `NaN`, and the gap is dropped without a word: the tube still passes through whatever it was supposed to clear | Run `node build.mjs --audit`; a gap that silently vanished shows up as a clearance problem |
+| `settle(obj, goal, dt, tau)` with `tau` much smaller than `dt` | The spring integrates `v += (goal - x) * dt / tau`, which diverges: one frame later the value is `1e69` and whatever it drives has left the building | Never pass `tau < dt`. To snap instead, assign `obj.x = goal; obj.v = 0` |
+| `glCamera(P)` returns only `{ origin, k, cam: [sin a, cos a, sin e, cos e] }` | There is no screen-right vector to read. Code that reaches for `camera.R` throws at build time, and code that guesses one draws the effect rotated | Derive the right vector from the azimuth yourself: `[cos a, -sin a, 0]` |
+| Screen coordinates reported by `audit.mjs` are **viewBox** units, not CSS pixels | The card is often laid out at a different size than its `viewBox` (a 600x800 viewBox in a 672x896 box), so an audit position looks like the wrong part of the drawing | `scale = canvasBox.width / viewBox.width` before mapping a reported position onto a screenshot |
