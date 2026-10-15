@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, 
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { resolveTarget } from "./safe-target.mjs";
 import { LINE_ENDS } from "./line-ends.mjs";
 
 function usage() {
@@ -37,8 +38,9 @@ function chromePath() {
 }
 
 async function browser(target, { width, height, scale, throttle, noWebgl }) {
+  const { url, isFile } = resolveTarget(target, process.argv.includes("--allow-remote"));
   const profile = mkdtempSync(join(tmpdir(), "turn-check-"));
-  const chrome = spawn(chromePath(), ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const chrome = spawn(chromePath(), ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", ...(isFile ? ["--allow-file-access-from-files"] : []), "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
   const port = await chromePort(chrome, profile);
   const page = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
   const socket = new WebSocket(page.webSocketDebuggerUrl);
@@ -71,7 +73,6 @@ async function browser(target, { width, height, scale, throttle, noWebgl }) {
   if (noWebgl) await send("Page.addScriptToEvaluateOnNewDocument", { source: NO_GL });
   await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: scale, mobile: width < 600 });
   if (throttle > 1) await send("Emulation.setCPUThrottlingRate", { rate: throttle });
-  const url = /^https?:|^file:/.test(target) ? target : pathToFileURL(resolve(target)).href;
   await send("Page.navigate", { url });
   await new Promise((done) => setTimeout(done, 1500));
   const close = () => {

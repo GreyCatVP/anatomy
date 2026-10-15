@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { resolveTarget } from "./safe-target.mjs";
 import { LINE_ENDS } from "./line-ends.mjs";
 
 if (typeof WebSocket === "undefined" && !process.execArgv.includes("--experimental-websocket")) {
@@ -23,6 +23,7 @@ function usage() {
   --theme t     emulate prefers-color-scheme: dark or light (only pages that read the media query follow it)
   --no-webgl    make canvas.getContext("webgl"/"webgl2") return null, to check the SVG fallback
   --preload js  run a script before the page's own scripts (counters, stubs, hooks)
+  --allow-remote  open a non-local http(s) page (default: only files and localhost)
   Kit pages set their theme at build time (body data-theme), so drive the -light.html build for light.
   Put anything with eval strings in an --actions file: inline JSON quoting breaks easily.
 
@@ -99,6 +100,7 @@ async function main() {
     else if (arg === "--reduced") options.reduced = true;
     else if (arg === "--theme") options.theme = argv[++index];
     else if (arg === "--no-webgl") options.noWebgl = true;
+    else if (arg === "--allow-remote") options.allowRemote = true;
     else if (arg === "--preload") options.preload = readFileSync(argv[++index], "utf8");
     else if (arg === "--actions") options.actions = JSON.parse(readFileSync(argv[++index], "utf8"));
     else rest.push(arg);
@@ -110,14 +112,14 @@ async function main() {
   for (const action of actions) {
     if (!Array.isArray(action) || !kinds.has(action[0])) throw new Error(`unknown action ${Array.isArray(action) ? action[0] : action}`);
   }
-  const url = /^https?:|^file:/.test(target) ? target : pathToFileURL(resolve(target)).href;
+  const { url, isFile } = resolveTarget(target, options.allowRemote);
   const binary = chromePath();
   if (!binary) {
     console.error("No Chrome found. Set CHROME_PATH to a Chrome or Chromium binary.");
     process.exit(1);
   }
   const profile = mkdtempSync(join(tmpdir(), "iso-drive-"));
-  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", "--allow-file-access-from-files", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
+  const chrome = spawn(binary, ["--headless=new", ...(process.platform === "linux" ? ["--no-sandbox"] : []), ...(process.platform === "win32" ? ["--do-not-de-elevate"] : []), "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--no-first-run", "--no-default-browser-check", "--hide-scrollbars", ...(isFile ? ["--allow-file-access-from-files"] : []), "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "about:blank"]);
   const port = await chromePort(chrome, profile);
   const finish = (code) => {
     chrome.kill("SIGKILL");
