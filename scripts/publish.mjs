@@ -28,7 +28,7 @@ function usage(message) {
 
 The figure must be plain HTML: a build script that writes standalone pages next to itself, in any theme.
 Only the source is copied, to figures/<author>/<id>/: the gallery's CI builds the pages and the poster.
-In Claude Code, the time to make and the tokens spent are read from this session's own log (from the request that
+In Claude Code and Antigravity, the time to make and the tokens spent are read from this session's own log (from the request that
 made the figure up to the request to publish it, with idle gaps over 10 minutes left out); --minutes and --tokens
 override them, and --no-session leaves them out. Other agents pass them if they know them.
 Without --submit nothing is pushed: the command prints the git and gh commands to run when you are ready.
@@ -286,7 +286,7 @@ async function submit(options) {
   if (!options.noSession && !(options.minutes && options.tokens)) {
     const measured = fromThisSession({ prompt: options.prompt });
     const shown = { minutes: options.minutes ?? measured?.minutes, tokens: options.tokens ?? measured?.tokens };
-    console.log(shown.minutes && shown.tokens ? `  · record ${describe(shown)} to make it${measured ? " (read from this session)" : ""}` : "  · no time or token count (not run inside Claude Code; pass --minutes and --tokens to add them)");
+    console.log(shown.minutes && shown.tokens ? `  · record ${describe(shown)} to make it${measured ? " (read from this session)" : ""}` : "  · no time or token count (not run inside Claude Code or Antigravity; pass --minutes and --tokens to add them)");
   } else if (options.minutes || options.tokens) console.log(`  · record${options.minutes ? ` ${options.minutes} min` : ""}${options.tokens ? ` ${options.tokens} tokens` : ""}`);
   console.log(`  (in ${repo})`);
   if (options.dryRun) return console.log("\ndry run: nothing was done");
