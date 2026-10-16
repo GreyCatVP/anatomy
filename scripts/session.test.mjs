@@ -75,12 +75,19 @@ test("Antigravity session logs and spawned subagents are measured with cache rea
         source: "MODEL",
         type: "GENERIC",
         created_at: at(6),
-        content: `Created the following subagents:\n{\n  "conversationId": "${sub}"\n}`,
+        content: `Created At: ${at(6)}\nCompleted At: ${at(6)}\nCreated the following subagents:\n{\n  "conversationId": "${sub}"\n}`,
       },
-      agReply(5, 8, 1010, 20),
-      agReply(6, 70, 1010, 20),
-      agUser(7, 80, "publish this figure to the community gallery"),
-      agReply(8, 81, 5000, 5000),
+      {
+        step_index: 5,
+        source: "MODEL",
+        type: "GENERIC",
+        created_at: at(7),
+        content: `Created At: ${at(7)}\nCompleted At: ${at(7)}\n\nThe command exited with code 0.\nOutput:\nCreated the following subagents:\n{\n  "conversationId": "00000000-0000-0000-0000-000000000000"\n}`,
+      },
+      agReply(6, 8, 1010, 20),
+      agReply(7, 70, 1010, 20),
+      agUser(8, 80, "publish this figure to the community gallery"),
+      agReply(9, 81, 5000, 5000),
     ]));
     writeFileSync(join(root, "brain", sub, ".system_generated", "logs", "transcript.jsonl"), lines([
       agUser(0, 6, "research the token bucket parts"),
@@ -94,6 +101,11 @@ test("Antigravity session logs and spawned subagents are measured with cache rea
     assert.equal(result.minutes, 3 + 10);
     assert.equal(result.from, at(5));
     assert.equal(result.to, at(80));
+
+    const withoutPrompt = fromThisSession({
+      env: { ANTIGRAVITY_CONVERSATION_ID: id, ANTIGRAVITY_APP_DATA_DIR: root },
+    });
+    assert.deepEqual(withoutPrompt, result);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

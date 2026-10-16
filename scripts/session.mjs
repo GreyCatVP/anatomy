@@ -41,12 +41,14 @@ export function sessionFiles(sessionId, root = join(homedir(), ".claude", "proje
 }
 
 function subagentIds(file) {
+  const full = file.replace(/transcript\.jsonl$/, "transcript_full.jsonl");
+  const source = existsSync(full) ? full : file;
   const out = [];
-  for (const line of readFileSync(file, "utf8").split("\n")) {
+  for (const line of readFileSync(source, "utf8").split("\n")) {
     if (!line.includes("Created the following subagents:")) continue;
     try {
-      const content = String(JSON.parse(line)?.content ?? "");
-      if (!content.includes("Created the following subagents:")) continue;
+      const content = String(JSON.parse(line)?.content ?? "").trim();
+      if (!/^(?:Created At:[^\n]*\nCompleted At:[^\n]*\n)?Created the following subagents:/.test(content)) continue;
       for (const match of content.matchAll(/"conversationId":\s*"([0-9a-f-]{8,64})"/gi)) out.push(match[1]);
     } catch {}
   }
@@ -140,7 +142,7 @@ export function measure(files, { prompt = "" } = {}) {
   const asks = mainEntries.filter((entry) => entry.type === "user" && !entry.isSidechain && textOf(entry));
   const head = squash(prompt).slice(0, 48);
   const start =
-    (head && asks.find((entry) => squash(textOf(entry)).includes(head))) ??
+    (head ? asks.find((entry) => squash(textOf(entry)).includes(head)) : null) ??
     asks.find((entry) => /\/anatomy\b|\banatomy\b/i.test(textOf(entry))) ??
     mainEntries[0];
   if (!start) return null;
