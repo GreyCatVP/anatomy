@@ -1,0 +1,31 @@
+<button id="reader-notes-toggle" class="reader-notes-toggle reader-ui" type="button" aria-controls="reader-notes-panel" aria-expanded="false" hidden><span aria-hidden="true">✎</span> Reading annotations <span id="reader-note-count">0</span></button>
+<div id="reader-tools" class="reader-tools reader-ui" role="toolbar" aria-label="Annotate the selected text" hidden>
+  <span id="reader-selection-count" class="reader-selection-count">Selected text</span>
+  <button type="button" data-annotation-action="underline" title="Underline the selected text"><span class="reader-underline-sample" aria-hidden="true">U</span> Underline</button>
+  <button type="button" data-annotation-action="red" title="Make the selected text red"><span class="reader-red-sample" aria-hidden="true">A</span> Red text</button>
+  <button type="button" data-annotation-action="highlight" title="Highlight the selected text in yellow"><span class="reader-highlight-sample" aria-hidden="true">▰</span> Highlight</button>
+  <button type="button" data-annotation-action="clear" title="Clear every mark in the selected range">Clear</button>
+</div>
+<aside id="reader-notes-panel" class="reader-notes-panel reader-ui" aria-labelledby="reader-panel-title" hidden>
+  <header class="reader-panel-header"><div><p>YOUR READING COPY</p><h2 id="reader-panel-title">Reading annotations</h2></div><button id="reader-close" type="button" aria-label="Close reading annotations">×</button></header>
+  <p class="reader-instructions">Select document text, then choose <strong>Underline, Red text, or Highlight</strong> in the floating toolbar. You can combine all three styles. <strong>Click marked text</strong> to add, view, or edit a note.</p>
+  <p class="reader-scope">Select text again and choose Clear to remove marks within that range. Clearing every mark attached to a note also removes the note; Undo restores it.</p>
+  <p class="reader-scope">Works with document text, tables, and code. Interactive diagrams, math layout, and controls keep their existing behavior.</p>
+  <div class="reader-history"><button id="reader-undo" type="button" disabled>↶ Undo</button><button id="reader-redo" type="button" disabled>↷ Redo</button><button id="reader-clear-all" type="button" disabled>Clear all</button></div>
+  <div class="reader-save-box"><p id="reader-status" role="status" aria-live="polite">Preparing annotations…</p><button id="reader-export-html" type="button">Export annotated HTML <span aria-hidden="true">↗</span></button><small>Marks and saved notes are stored automatically in this browser. Export HTML to keep a copy or move to another device. The downloaded file includes annotations and all interactions; interactive controls start in their initial state.</small></div>
+  <div class="reader-list-heading"><h3>My marks</h3><div><span id="reader-list-count">0 spans</span><span id="reader-comment-count"> · 0 notes</span></div></div>
+  <p id="reader-empty">No marks yet. Select a passage you want to remember.</p>
+  <ol id="reader-note-list" aria-label="Saved document marks"></ol>
+</aside>
+<section id="reader-note-editor" class="reader-note-editor reader-ui" role="dialog" aria-labelledby="reader-note-editor-title" hidden>
+  <header class="reader-panel-header"><div><p>THOUGHTS IN THE MARGIN</p><h2 id="reader-note-editor-title">Note</h2></div><button id="reader-note-close" type="button" aria-label="Save and close the note">×</button></header>
+  <blockquote id="reader-note-quote"></blockquote>
+  <label id="reader-note-choice-label" for="reader-note-choice" hidden>Notes attached to this text</label><select id="reader-note-choice" hidden></select>
+  <label class="reader-note-label" for="reader-note-text">Write your thoughts, questions, or connections</label>
+  <textarea id="reader-note-text" rows="6" maxlength="10000" placeholder="For example: This connects to an earlier idea. What changes if the assumptions are different?"></textarea>
+  <p class="reader-note-help">Choose Save note to keep your changes. Closing, switching marks, or exporting also saves the draft. Cancel discards the current edit.</p>
+  <a id="reader-note-source" href="#" target="_blank" rel="noreferrer" hidden>Open source link ↗</a>
+  <div class="reader-note-actions"><button id="reader-note-delete" type="button" disabled>Delete note</button><button id="reader-note-cancel" type="button">Cancel</button><button id="reader-note-save" type="button">Save note</button></div>
+</section>
+<div id="reader-toast" class="reader-toast reader-ui" role="status" aria-live="polite" hidden></div>
+<script type="application/json" id="reader-annotation-data">{"version":1,"notebookId":"main","updatedAt":0,"records":[],"notes":[]}</script>
