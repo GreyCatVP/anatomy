@@ -103,6 +103,12 @@ Pick the path that fits the project:
 - **Standalone HTML, a static SVG, a blog post or any non-React site.** Write a Node build script like `examples/dial-indicator/build.mjs`. It imports `kit/iso-kit.mjs`, assembles strings with `solidSvg`, `lineSvg`, `dotsSvg`, `wireSvg` and `faceTextSvg`, wraps them with `figureSvg` and `plateHtml`, and writes the page with `pageHtml({ script: kitScript() + live })`, or `kitScript() + glScript() + live` when it has a shader. For a lone `.svg` file use `figureSvg({ standalone: "dark" | "light" })`, which embeds the styles.
 - **React or Next.js.** Copy `kit/` into the project (for example `components/iso/`). Keep geometry in plain `.ts` modules, build the static art in a server component with the `draw.tsx` components, and pass it as element props to one `"use client"` live component that moves things. `references/react.md` explains the split and a trap with large pages.
 
+## Optional: reading annotations for learning pages
+
+For a standalone long-form explainer, add reading annotations when the user asks for marking text or taking notes. Preserve its prose, figures and interactions. Small figures do not need a reading toolbar by default.
+
+Read [references/reading-annotations.md](references/reading-annotations.md) for selection marks, editable notes, local persistence and portable annotated HTML. The starter in `assets/reading-annotations/` supplies the model, UI, CSS and a standalone demo builder; configure its reading scope and document namespace for the page.
+
 ## Craft rules (short form)
 
 These are the rules that separate a crafted figure from a diagram. `references/craft.md` gives the full reasoning and recipes.

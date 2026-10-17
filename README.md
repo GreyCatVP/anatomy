@@ -229,6 +229,17 @@ Three habits get the best figures:
 
 A figure arrives as source you own: a Node build script and the page it writes, or, for React, geometry modules, a server component for the static art and one client component for the motion. The kit comes with it.
 
+### Reading annotations (optional)
+
+For a long-form learning page, ask Anatomy to let the reader underline, color or highlight passages and attach editable notes. Marks and notes stay in browser storage and travel in an exported standalone HTML. This layer is optional; existing figures and controls keep their behavior.
+
+The [reading-annotations guide](references/reading-annotations.md) includes an adaptable starter. Build its offline demo in either theme:
+
+```sh
+node assets/reading-annotations/build-demo.mjs --light /tmp/reading-light.html
+node assets/reading-annotations/build-demo.mjs --dark /tmp/reading-dark.html
+```
+
 ## Examples
 
 Each framework-free example has a Node build script that writes standalone pages next to itself. Add `--light` for the light theme.
