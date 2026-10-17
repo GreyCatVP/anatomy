@@ -125,6 +125,12 @@ Rotations about z can't be done with a screen transform: rebuild the rotating pa
 | `glScript()` | From `scripts/inline-kit.mjs`. The source of `kit/gl.mjs` (`GLSL_ISO`, `glCamera`, `glLayer`, `smooth`, `burst`, `settle`), to inline after `kitScript()` on a page with a shader: `script: kitScript() + glScript() + live`. It doesn't depend on the kit, so a page whose live code calls no kit function can inline it alone (the Raptor uses `glScript() + LIVE`). Everything is one module script, so live code must not redeclare `smooth`, `burst` or `settle`: a second `const smooth` is a SyntaxError that kills the page. |
 | `turnScript()` | From `scripts/inline-kit.mjs`. The 3D runtime (`TURN`, `TURN_CSS`) with `export` stripped, for a page with live parts: `script: turnScript() + glScript() + live`. Its internals are prefixed `t3`/`T3_`, so it inlines beside the kit and the WebGL layer. |
 | `ISO_CSS` | All the styles. `kit/iso.css` is the same text. |
+| `zonePalette(zones)` | From `kit/stage-nav.mjs`. Gives each `{ id, name, text, color? }` a stage colour token (`var(--anatomy-stage-n)`) unless it has one. |
+| `zoneGroup(zone, asm, svg)` | Wraps an assembly as `<g class="z z-<zone>" data-asm="<asm>">` for hover, highlight and the camera. |
+| `stageNavCss(zones)` | Stage tokens (dark, with light overrides), stage tints, hover and auto-highlight focus, the large readout bar, legend chips and buttons. Put it in the body. |
+| `stageNavHtml(zones, { labels })` | Legend chips and the auto-highlight, follow-camera and reset buttons, for under the plate. One zone gives just the reset button. |
+| `stageNavScript()` | The source of `installStageNav`, to inline: `script: kitScript() + stageNavScript() + live`. |
+| `installStageNav({ stage, svg, shot, zoneText, onHover, kick, labels })` | Runtime. Wheel zoom, drag pan, reset (`0`, double-click), hover focus, auto-highlight (`H`) and follow camera (`F`). Returns `{ step(dt), busy(), reset, setFollow, setAuto, hover }`. `references/stage-nav.md` has the contract. |
 
 ## 9. React components
 From `kit/react/draw.tsx`, which is server-safe:
