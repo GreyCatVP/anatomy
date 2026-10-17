@@ -163,6 +163,8 @@ other editing shortcuts while a textarea, input or editable field is focused.
 
 Avoid forcing pointer selection on touch devices. Leave the native selection
 handles usable and keep the contextual toolbar reachable after text selection.
+Existing marks must remain selectable with a mouse so styles can be combined.
+Restore their keyboard access when a mouse gesture ends or is cancelled.
 Keep editor and list controls usable at a narrow viewport. Before jumping to a
 note, open any containing collapsed `details`, then scroll the passage into
 view and announce or focus the target without changing its content.

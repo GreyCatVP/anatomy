@@ -395,6 +395,33 @@ for (const theme of ['light', 'dark']) {
       assert.equal(page.document.activeElement.closest('[hidden]'), null, 'focus does not remain inside the hidden panel');
     });
 
+    await t.test('mouse selection releases mark focus temporarily and restores keyboard access', subtest => {
+      const page = pageFor(subtest);
+      markParagraph(page);
+      const mark = page.document.querySelector('[data-reader-mark][role="button"]');
+      const pointer = (type, pointerType = 'mouse', button = 0) => {
+        const event = new page.window.Event(type, {bubbles:true});
+        Object.defineProperties(event, {pointerType:{value:pointerType}, button:{value:button}});
+        mark.dispatchEvent(event);
+      };
+      for (const ending of ['pointerup', 'pointercancel', 'blur', 'keydown']) {
+        assert.equal(mark.getAttribute('tabindex'), '0');
+        pointer('pointerdown');
+        assert.equal(mark.hasAttribute('tabindex'), false, 'native mouse selection must start on nonfocusable text');
+        if (ending === 'blur') page.window.dispatchEvent(new page.window.Event('blur'));
+        else if (ending === 'keydown') keyboard(page, page.document.body, 'Tab');
+        else pointer(ending);
+        assert.equal(mark.getAttribute('tabindex'), '0', 'keyboard access returns after ' + ending);
+        mark.focus();
+        assert.equal(page.document.activeElement, mark);
+      }
+      pointer('pointerdown', 'touch');
+      assert.equal(mark.getAttribute('tabindex'), '0', 'touch selection retains native mark semantics');
+      pointer('pointerup', 'touch');
+      pointer('pointerdown', 'mouse', 2);
+      assert.equal(mark.getAttribute('tabindex'), '0', 'context-menu clicks retain keyboard access');
+    });
+
     await t.test('keyboard opens marked text, Escape cancels drafts, and the save shortcut commits', subtest => {
       const page = pageFor(subtest);
       markParagraph(page);

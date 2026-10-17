@@ -240,6 +240,8 @@ node assets/reading-annotations/build-demo.mjs --light /tmp/reading-light.html
 node assets/reading-annotations/build-demo.mjs --dark /tmp/reading-dark.html
 ```
 
+The [browser validation report](docs/reading-annotations/validation.md) includes light/dark screenshots and commands for repeating the offline desktop and touch checks.
+
 ## Examples
 
 Each framework-free example has a Node build script that writes standalone pages next to itself. Add `--light` for the light theme.

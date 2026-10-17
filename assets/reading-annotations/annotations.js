@@ -85,6 +85,15 @@
   let editorAnchor = null;
   let editorClickAnchor = null;
   let editingNoteId = null;
+  let mouseSelectionFocus = null;
+
+  function restoreMouseSelectionFocus() {
+    if (!mouseSelectionFocus) return;
+    const {mark, tabIndex} = mouseSelectionFocus;
+    mouseSelectionFocus = null;
+    if (mark.isConnected) mark.setAttribute('tabindex', tabIndex);
+    selecting = false;
+  }
 
   function toast(message) {
     clearTimeout(toastTimer);
@@ -399,11 +408,21 @@
   });
   document.addEventListener('selectionchange', readSelection);
   document.addEventListener('pointerdown', event => {
+    restoreMouseSelectionFocus();
+    if (event.pointerType === 'mouse' && event.button === 0) {
+      const mark = event.target.closest('[data-reader-mark][role="button"][tabindex]');
+      if (mark) {
+        mouseSelectionFocus = {mark, tabIndex:mark.getAttribute('tabindex')};
+        mark.removeAttribute('tabindex');
+      }
+    }
     if (!event.target.closest('.reader-ui')) { selecting = true; toolbar.hidden = true; selectedRanges = []; }
   });
-  document.addEventListener('pointerup', () => { selecting = false; setTimeout(readSelection, 0); });
-  document.addEventListener('pointercancel', () => { selecting = false; });
+  document.addEventListener('pointerup', () => { restoreMouseSelectionFocus(); selecting = false; setTimeout(readSelection, 0); });
+  document.addEventListener('pointercancel', () => { restoreMouseSelectionFocus(); selecting = false; });
+  window.addEventListener('blur', () => { restoreMouseSelectionFocus(); selecting = false; });
   document.addEventListener('keydown', event => {
+    restoreMouseSelectionFocus();
     if (!event.defaultPrevented && event.target?.matches?.('[data-reader-mark][role="button"]') && (event.key === 'Enter' || event.key === ' ')) {
       event.preventDefault(); openMarkedText(event.target); return;
     }
