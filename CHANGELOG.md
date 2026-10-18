@@ -15,6 +15,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Fixed
 
+- `drive.mjs` checks the arguments of `shot` and `turn` actions before it starts Chrome, as it already does for `orbit` and `sheet`. `["turn", "x"]` used to call `window.__isoTurn.set(NaN)` and carry on, and a bad `shot` scale or region failed only after Chrome had started.
 - Line-end audits follow cubic and quadratic strokes with a bounded screen-space approximation, so lines attached between curve samples are not reported as loose.
 
 - `drive.mjs` waits for the page to load (up to 10 s) before it runs the first action, and gives up with an error when Chrome leaves a request unanswered for 60 s instead of hanging, as `capture.mjs` now does.

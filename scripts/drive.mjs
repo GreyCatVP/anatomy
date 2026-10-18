@@ -116,6 +116,19 @@ async function main() {
   if (!Array.isArray(actions)) throw new Error("actions must be an array");
   for (const action of actions) {
     if (!Array.isArray(action) || !kinds.has(action[0])) throw new Error(`unknown action ${Array.isArray(action) ? action[0] : action}`);
+    if (action[0] === "shot") {
+      const [, out, selector, scale, region] = action;
+      if (typeof out !== "string" || !out) throw new Error(`shot needs the name of a PNG file, got ${out}`);
+      if (selector != null && typeof selector !== "string") throw new Error(`shot needs a selector string or null, got ${selector}`);
+      if (scale != null && !(Number.isFinite(scale) && scale > 0)) throw new Error(`shot needs a scale above 0, got ${scale}`);
+      if (region != null && !(Array.isArray(region) && region.length === 4 && region.every(Number.isFinite) && region[2] > 0 && region[3] > 0)) throw new Error(`shot needs a region of x, y, width and height above 0, got ${JSON.stringify(region)}`);
+    }
+    if (action[0] === "turn") {
+      const [, value, group] = action;
+      const angles = value !== null && typeof value === "object" && !Array.isArray(value) && group == null ? Object.values(value) : [value];
+      if (!angles.length || !angles.every(Number.isFinite)) throw new Error(`turn needs an angle in degrees, or an object of angles by group name, got ${JSON.stringify(value)}`);
+      if (group != null && (typeof group !== "string" || !group)) throw new Error(`turn needs a group name string, got ${group}`);
+    }
     if (action[0] === "orbit") {
       const [, , from, to, step] = action;
       if (![from, to, step].every(Number.isFinite) || step === 0 || (step > 0 ? from > to : from < to)) throw new Error(`orbit needs numeric from, to and a nonzero step that moves from ${from} toward ${to}, got step ${step}`);
