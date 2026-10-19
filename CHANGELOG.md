@@ -17,6 +17,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 ### Fixed
 
 - Line-end audits follow cubic and quadratic strokes with a bounded screen-space approximation, so lines attached between curve samples are not reported as loose.
+- `lines.mjs` no longer judges line ends that the svg clips away. On a page that zooms by changing the `viewBox`, a line that starts off-stage was reported as floating. Ends inside the box, and every end in an svg whose `overflow` is `visible`, are judged as before.
 
 - `drive.mjs` waits for the page to load (up to 10 s) before it runs the first action, and gives up with an error when Chrome leaves a request unanswered for 60 s instead of hanging, as `capture.mjs` now does.
 - `drive.mjs` rejects an `orbit` whose step is zero or points away from its end angle, and a `sheet` whose count is not a whole number of at least 1, before Chrome starts. A zero step used to capture frames without ever finishing; the others died with `Cannot read properties of undefined (reading 'width')`.

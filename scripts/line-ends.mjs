@@ -208,7 +208,7 @@ function lineEnds({ select = null, tolerance = 1, root: rootSlack = 2, mark = 7,
       }
     });
     const checked = el.classList.contains("iso-line") && !skipClass.some((name) => el.classList.contains(name)) && alpha >= least;
-    if (checked) lines.push({ el, subpaths, alpha, free: el.getAttribute("data-free") });
+    if (checked) lines.push({ el, subpaths, alpha, free: el.getAttribute("data-free"), clip: getComputedStyle(owner).overflow === "visible" ? null : owner.getBoundingClientRect() });
   }
   const near = (p, reach) => {
     const out = new Set();
@@ -281,6 +281,7 @@ function lineEnds({ select = null, tolerance = 1, root: rootSlack = 2, mark = 7,
       if (length < 0.2 * scale) continue;
       const result = {};
       for (const [end, p] of [["start", first], ["end", last]]) {
+        if (line.clip && (p[0] < line.clip.left || p[0] > line.clip.right || p[1] < line.clip.top || p[1] > line.clip.bottom)) continue;
         if (line.free === "" || line.free === "both" || line.free === end) {
           result[end] = 0;
           continue;

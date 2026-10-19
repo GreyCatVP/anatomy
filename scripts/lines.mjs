@@ -12,7 +12,8 @@ Every open subpath of every .iso-line (seams, grooves, ribs, rule lines, ticks, 
 a dot or an outline within the tolerance (viewBox px), or under a fill painted after it. A short straight mark (a tick)
 needs one rooted end. Outlines, creases, bevels and tube edges are the kit's own and are not checked. Lines drawn with
 fadeLineSvg ramp out and pass; lineSvg(d, { free: true | "start" | "end" }) marks an end that is meant to stop (a needle
-tip, rule lines standing for printed text). Exits 1 if any end floats; --out writes the card with each one ringed.`);
+tip, rule lines standing for printed text). An end the svg clips away (outside its box while its overflow is not visible, as in a
+zoomed viewBox) is not drawn and is not judged. Exits 1 if any end floats; --out writes the card with each one ringed.`);
   process.exit(argv.length ? 0 : 1);
 }
 const take = (flag, fallback) => {
