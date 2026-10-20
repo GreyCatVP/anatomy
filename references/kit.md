@@ -74,6 +74,8 @@ What a `SolidPaths` contains:
 | `lineOnTop(a, b, z, P)` | One segment on a horizontal face. |
 | `planOutline(plan, z, P, steps)` | A rounded-rectangle outline on a face, used for grooves and inlays (`insetPlan`). |
 | `ring(cx, cy, r, z, P, steps)` | A circle on a face, used for screw rings, bezels and seats. |
+| `onSide(points: Plane[], at, "x" \| "y", P, closed?)` | A polyline on a vertical face. Each point is `[u, z]`, with `u` running along the face: `"y"` is the face at `y = at` (`u` is x), `"x"` the face at `x = at` (`u` is y), as in `sideRing`. |
+| `sideOutline(plan, at, "x" \| "y", P, steps)` | `planOutline` on a vertical face: the plan's `x` and `w` run along the face, its `y` and `d` run up. Label slots, lamp windows, gauge strips and panels; the path is closed, so it also takes a fill. |
 | `segment(a, b, P)` | Any 3D segment. |
 | `rise(at, z0, z1, P)` | A vertical segment. |
 | `pointsAt(points, P)` | Projects a list of points, for screw and rivet dots. |

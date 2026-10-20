@@ -345,6 +345,15 @@ export function sideRing(center: Point3, radius: number, axis: "x" | "y", projec
   return pathOf(points, true);
 }
 
+export function onSide(points: Plane[], at: number, axis: "x" | "y", projection: Projection, closed = false) {
+  return pathOf(
+    points.map(([u, z]) => iso(axis === "x" ? [at, u, z] : [u, at, z], projection)),
+    closed,
+  );
+}
+
+export const sideOutline = (plan: Plan, at: number, axis: "x" | "y", projection: Projection, steps = 8) => onSide(ringOf(plan, steps), at, axis, projection, true);
+
 export function coil(from: number, to: number, center: Plane, radius: number, turns: number, axis: "x" | "y", projection: Projection, perTurn = 16) {
   const count = Math.max(1, Math.round(turns * perTurn));
   const back: string[] = [];

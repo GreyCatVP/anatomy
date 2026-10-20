@@ -280,6 +280,10 @@ export function sideRing(center, radius, axis, projection, steps = 20) {
     }
     return pathOf(points, true);
 }
+export function onSide(points, at, axis, projection, closed = false) {
+    return pathOf(points.map(([u, z]) => iso(axis === "x" ? [at, u, z] : [u, at, z], projection)), closed);
+}
+export const sideOutline = (plan, at, axis, projection, steps = 8) => onSide(ringOf(plan, steps), at, axis, projection, true);
 export function coil(from, to, center, radius, turns, axis, projection, perTurn = 16) {
     const count = Math.max(1, Math.round(turns * perTurn));
     const back = [];
