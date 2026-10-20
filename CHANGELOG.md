@@ -6,7 +6,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Added
 
-- `kit/stage-nav.mjs` and `references/stage-nav.md`: stage navigation for framework-free pages. Wheel zoom and drag pan, a large readout bar across the bottom of the card, and for process figures a colour token per stage, hover focus with legend chips, auto-highlight of the running step (`H`) and a follow camera (`F`). SKILL.md makes it the default for new figures; existing examples are unchanged.
+- `kit/stage-nav.mjs` and `references/stage-nav.md`: stage navigation for framework-free pages. Wheel zoom and drag pan, `flyTo(names | box)` and `home()` that work without zones (with `Esc` and an optional `zoomOnClick` for touch), a large `aria-live` explanation bar under the drawing (`stageNavBar()`), clipping while zoomed, and for process figures a colour token per stage, hover focus with legend chips (unfocused stages dimmed by tone rather than opacity), auto-highlight of the running step (`H`) and a follow camera (`F`). SKILL.md makes it the default for new figures; existing examples are unchanged.
 - Antigravity support, alongside Claude Code, OpenCode and Codex. Documented user and project installation paths in the README and CONTRIBUTING, updated SKILL.md compatibility, and added Antigravity to the bug report form.
 - MiniMax Code support. The README and CONTRIBUTING document its user (`~/.minimax/skills`) and project (`.minimax/skills`) folders and `npx skills add ... -a minimax-code`, SKILL.md lists it, and the bug report form offers it.
 

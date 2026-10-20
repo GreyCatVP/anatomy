@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { zonePalette, zoneGroup, stageNavCss, stageNavHtml, stageNavScript } from "../kit/stage-nav.mjs";
+import { zonePalette, zoneGroup, stageNavCss, stageNavHtml, stageNavBar, stageNavScript } from "../kit/stage-nav.mjs";
 
 const zones = zonePalette([{ id: "a", name: "A", text: "first" }, { id: "b", name: "B", text: "second", color: "var(--anatomy-stage-5)" }]);
 
@@ -11,6 +11,24 @@ test("zonePalette assigns stage tokens in order and keeps an explicit colour", (
 
 test("zoneGroup writes the zone class and the assembly name", () => {
   assert.equal(zoneGroup("a", "hopper", "<path/>"), '<g class="z z-a" data-asm="hopper"><path/></g>');
+  assert.equal(zoneGroup(null, "neuron", "<path/>"), '<g data-asm="neuron"><path/></g>');
+});
+
+test("stageNavCss dims by pulling tones towards the card, not by opacity", () => {
+  const css = stageNavCss(zones);
+  assert.doesNotMatch(css, /opacity/);
+  assert.match(css, /\.iso-stage\[data-focus\]:not\(\[data-focus="a"\]\) \.z-a[^{]*\{--nav-dim:82%;--anatomy-paper:color-mix\(in srgb,var\(--nav-paper\),var\(--nav-card\) var\(--nav-dim\)\)/);
+});
+
+test("stageNavCss clips a zoomed drawing and leaves the corner readout alone", () => {
+  const css = stageNavCss(zones);
+  assert.match(css, /\.iso-stage svg\[data-zoomed\]\{overflow:hidden\}/);
+  assert.doesNotMatch(css, /data-corner="readout"/);
+  assert.match(css, /\[data-nav-bar\]\{--zc:var\(--anatomy-stage-1\)\}/);
+});
+
+test("stageNavBar is a live region outside the hidden corners", () => {
+  assert.equal(stageNavBar(), '<div class="nav-bar" data-nav-bar aria-live="polite"></div>');
 });
 
 test("stageNavCss defines dark tokens with light overrides and no literal colour per zone", () => {

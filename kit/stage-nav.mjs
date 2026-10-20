@@ -6,11 +6,17 @@ export function zonePalette(zones) {
   return zones.map((z, i) => ({ ...z, color: z.color || `var(--anatomy-stage-${(i % STAGE_DARK.length) + 1})` }));
 }
 
-export const zoneGroup = (zone, asm, svg) => `<g class="z z-${zone}" data-asm="${asm}">${svg}</g>`;
+export const zoneGroup = (zone, asm, svg) => `<g${zone ? ` class="z z-${zone}"` : ""} data-asm="${asm}">${svg}</g>`;
+
+const TONES = ["paper", "face", "top", "shade-0", "shade-1", "shade-2", "shade-3", "lit-top", "lit-shade", "hi", "mid", "lo", "faint", "lit", "halo", "dot", "red", "green", "blue", "strong"];
+const dimTones = (amount) => `--nav-dim:${amount};` + TONES.map((t) => `--anatomy-${t}:color-mix(in srgb,var(--nav-${t}),var(--nav-card) var(--nav-dim))`).join(";");
 
 export function stageNavCss(zones) {
-  const vars = zones.map((z) => `.z-${z.id},.zl [data-z="${z.id}"],.iso-plate:has(.iso-stage[data-focus="${z.id}"]) [data-readout],.iso-plate:has(.iso-stage[data-auto-zone="${z.id}"]) [data-readout]{--zc:${z.color}}`).join("\n");
+  const vars = zones.map((z) => `.z-${z.id},.zl [data-z="${z.id}"],.iso-plate:has(.iso-stage[data-focus="${z.id}"]) [data-nav-bar],.iso-plate:has(.iso-stage[data-auto-zone="${z.id}"]) [data-nav-bar]{--zc:${z.color}}`).join("\n");
   const focus = zones.map((z) => `.iso-stage[data-focus="${z.id}"] .z-${z.id}`).join(",");
+  const dimFocus = zones.map((z) => `.iso-stage[data-focus]:not([data-focus="${z.id}"]) .z-${z.id}`);
+  const dimAuto = zones.map((z) => `.iso-stage[data-auto]:not([data-focus]) .z-${z.id}:not(.on)`);
+  const dimZc = zones.map((z, i) => `${dimFocus[i]},${dimAuto[i]}{--zc:color-mix(in srgb,${z.color},var(--nav-card) var(--nav-dim))}`).join("\n");
   return `
 .iso{${stageTokens(STAGE_DARK)}}
 .iso[data-theme="light"]{${stageTokens(STAGE_LIGHT)}}
@@ -20,19 +26,19 @@ ${vars}
 ${[0, 1, 2, 3].map((n) => `:where(.z .iso-solid:not([data-lit]))>.iso-shade[data-shade="${n}"]{fill:color-mix(in srgb,var(--zc) 14%,var(--anatomy-shade-${n}))}`).join("\n")}
 :where(.z) .iso-line.iso-edge{stroke:color-mix(in srgb,var(--zc) 75%,var(--anatomy-mid))}
 :where(.z) .iso-face-text{fill:color-mix(in srgb,var(--zc) 70%,var(--anatomy-strong))}
-.z{transition:opacity .35s var(--anatomy-ease)}
-.iso-stage[data-focus] .z{opacity:.12}
-${focus}{opacity:1;filter:drop-shadow(0 0 5px var(--zc))}
-.iso-stage[data-auto]:not([data-focus]) .z{opacity:.16}
-.iso-stage[data-auto]:not([data-focus]) .z.on{opacity:1;filter:drop-shadow(0 0 2px var(--zc)) drop-shadow(0 0 10px var(--zc))}
+.iso-stage{--nav-card:var(--anatomy-card);${TONES.map((t) => `--nav-${t}:var(--anatomy-${t})`).join(";")}}
+${dimFocus.join(",")}{${dimTones("82%")}}
+${dimAuto.join(",")}{${dimTones("78%")}}
+${dimZc}
+${focus}{filter:drop-shadow(0 0 5px var(--zc))}
+.iso-stage[data-auto]:not([data-focus]) .z.on{filter:drop-shadow(0 0 2px var(--zc)) drop-shadow(0 0 10px var(--zc))}
 .iso-stage[data-auto]:not([data-focus]) .z.on .iso-line.iso-edge:not(.lit *):not(.iso-solid[data-lit]>*){stroke:var(--zc)}
 .iso-stage[data-auto]:not([data-focus]) .z.on .iso-solid:not([data-lit]):not(.lit *):not(.lit)>.iso-top{fill:color-mix(in srgb,var(--zc) 55%,var(--anatomy-top))}
 .iso-stage{cursor:grab;touch-action:pan-y;outline:none}
 .iso-stage.dragging{cursor:grabbing}
-.iso-plate{padding-bottom:120px}
-.iso-plate-corner[data-corner="hint"]{top:22px;bottom:auto}
-.iso-plate-corner[data-corner="readout"]{left:0;right:0;bottom:0;min-height:76px;display:flex;align-items:center;padding:14px 22px;box-sizing:border-box;white-space:normal;font-family:inherit;font-size:22px;line-height:1.45;letter-spacing:.01em;color:var(--anatomy-strong);background:color-mix(in srgb,var(--zc,var(--anatomy-muted)) 10%,var(--anatomy-card));border-left:5px solid var(--zc,var(--anatomy-lo));transition:background .3s,border-color .3s}
-@media (max-width:560px){.iso-plate-corner[data-corner="readout"]{font-size:16px}}
+.iso-stage svg[data-zoomed]{overflow:hidden}
+.nav-bar{margin-top:18px;min-height:76px;display:flex;align-items:center;padding:14px 22px;box-sizing:border-box;font-size:22px;line-height:1.45;letter-spacing:.01em;color:var(--anatomy-strong);background:color-mix(in srgb,var(--zc,var(--anatomy-muted)) 10%,var(--anatomy-card));border-left:5px solid var(--zc,var(--anatomy-lo));transition:background .3s,border-color .3s}
+@media (max-width:560px){.nav-bar{font-size:16px;min-height:60px;padding:10px 14px}}
 .zl{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;font-size:13px}
 .zl span{display:inline-flex;align-items:center;gap:7px;padding:4px 10px;border:1px solid color-mix(in srgb,var(--zc) 55%,transparent);color:var(--anatomy-strong);cursor:default}
 .zl span::before{content:"";width:10px;height:10px;background:var(--zc)}
@@ -53,21 +59,29 @@ export function stageNavHtml(zones, { labels = {} } = {}) {
   return `<div class="zl">${chips}${toggles}<button class="nav-btn" data-view-reset type="button">${L.reset} <kbd>0</kbd></button></div>`;
 }
 
-export function installStageNav({ stage, svg, shot = () => null, onHover = () => {}, zoneText = {}, kick = () => {}, labels = {} }) {
+export const stageNavBar = () => `<div class="nav-bar" data-nav-bar aria-live="polite"></div>`;
+
+export function installStageNav({ stage, svg, shot = () => null, onHover = () => {}, zoneText = {}, kick = () => {}, labels = {}, zoomOnClick = false }) {
   const L = { on: "on", off: "off", ...labels };
   const doc = stage.ownerDocument;
   const VB0 = svg.viewBox.baseVal;
-  const home = { x: VB0.x, y: VB0.y, w: VB0.width, h: VB0.height };
-  const vb = { ...home };
-  const ar = home.w / home.h;
-  const apply = () => {
-    vb.w = Math.min(Math.max(vb.w, home.w / 8), home.w);
-    vb.h = vb.w / ar;
-    vb.x = Math.min(Math.max(vb.x, home.x), home.x + home.w - vb.w);
-    vb.y = Math.min(Math.max(vb.y, home.y), home.y + home.h - vb.h);
-    svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
+  const full = { x: VB0.x, y: VB0.y, w: VB0.width, h: VB0.height };
+  const vb = { ...full };
+  const ar = full.w / full.h;
+  const clamp = (b) => {
+    b.w = Math.min(Math.max(b.w, full.w / 8), full.w);
+    b.h = b.w / ar;
+    b.x = Math.min(Math.max(b.x, full.x), full.x + full.w - b.w);
+    b.y = Math.min(Math.max(b.y, full.y), full.y + full.h - b.h);
+    return b;
   };
-  const reset = () => { Object.assign(vb, home); apply(); };
+  const apply = () => {
+    clamp(vb);
+    svg.setAttribute("viewBox", [vb.x, vb.y, vb.w, vb.h].join(" "));
+    svg.toggleAttribute("data-zoomed", vb.w < full.w);
+  };
+  let target = null;
+  const reset = () => { target = null; Object.assign(vb, full); apply(); };
 
   const btn = (sel) => doc.querySelector(sel);
   const state = { follow: !!btn("[data-follow]"), auto: !!btn("[data-autohi]") };
@@ -77,7 +91,7 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     if (b) { b.setAttribute("aria-pressed", String(v)); b.querySelector("b").textContent = v ? L.on : L.off; }
     kick();
   };
-  const setFollow = (v) => setToggle("follow", "[data-follow]", v);
+  const setFollow = (v) => { if (v) target = null; setToggle("follow", "[data-follow]", v); };
   const setAuto = (v) => { setToggle("auto", "[data-autohi]", v); autoStep(); };
   btn("[data-follow]")?.addEventListener("click", () => setFollow(!state.follow));
   btn("[data-autohi]")?.addEventListener("click", () => setAuto(!state.auto));
@@ -87,6 +101,7 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     const r = svg.getBoundingClientRect();
     if (!r.width || !r.height) return;
     e.preventDefault();
+    target = null;
     if (state.follow) setFollow(false);
     const fx = (e.clientX - r.left) / r.width, fy = (e.clientY - r.top) / r.height;
     const px = vb.x + fx * vb.w, py = vb.y + fy * vb.h;
@@ -101,7 +116,7 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     if (!drag) return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (!dragged && Math.hypot(dx, dy) < 4) return;
-    if (!dragged) { dragged = true; stage.setPointerCapture(drag.id); stage.classList.add("dragging"); if (state.follow) setFollow(false); }
+    if (!dragged) { dragged = true; target = null; stage.setPointerCapture(drag.id); stage.classList.add("dragging"); if (state.follow) setFollow(false); }
     const s = vb.w / svg.getBoundingClientRect().width;
     vb.x = drag.vx - dx * s; vb.y = drag.vy - dy * s;
     apply();
@@ -114,6 +129,7 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
   addEventListener("keydown", (e) => {
     if (e.target.closest && e.target.closest("input,textarea,select")) return;
     if (e.key === "0") { e.preventDefault(); reset(); }
+    else if (e.key === "Escape") home();
     else if ((e.key === "f" || e.key === "F") && btn("[data-follow]")) { e.preventDefault(); setFollow(!state.follow); }
     else if ((e.key === "h" || e.key === "H") && btn("[data-autohi]")) { e.preventDefault(); setAuto(!state.auto); }
   });
@@ -124,10 +140,10 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     kick();
   };
   stage.addEventListener("pointerover", (e) => { const z = e.target.closest(".z"); const m = z && [...z.classList].find((c) => c.startsWith("z-")); hover(m ? m.slice(2) : null); });
-  stage.addEventListener("pointerleave", () => hover(null));
+  stage.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") hover(null); });
   doc.querySelectorAll(".zl [data-z]").forEach((t) => {
     t.addEventListener("pointerenter", () => hover(t.dataset.z));
-    t.addEventListener("pointerleave", () => hover(null));
+    t.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") hover(null); });
   });
 
   const groups = [...svg.querySelectorAll("[data-asm]")].filter((g) => g.dataset.asm);
@@ -142,6 +158,36 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     s.forEach((n) => { if (!box[n]) throw new Error(`stage-nav: shot() names an assembly with no data-asm group: ${n}`); });
     return s;
   };
+  const union = (names) => {
+    const bs = names.map((n) => { if (!box[n]) throw new Error(`stage-nav: no data-asm group named ${n}`); return box[n]; });
+    return { x0: Math.min(...bs.map((b) => b.x0)), y0: Math.min(...bs.map((b) => b.y0)), x1: Math.max(...bs.map((b) => b.x1)), y1: Math.max(...bs.map((b) => b.y1)) };
+  };
+  const frame = ({ x0, y0, x1, y1 }, pad, min) => {
+    x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    const w = Math.min(full.w, Math.max(x1 - x0, (y1 - y0) * ar, min));
+    return { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - w / ar / 2, w };
+  };
+  function flyTo(to) {
+    if (typeof to === "string" || Array.isArray(to)) target = frame(union([].concat(to)), 40, full.w / 3.2);
+    else if (to && [to.x, to.y, to.w, to.h].every(Number.isFinite)) target = frame({ x0: to.x, y0: to.y, x1: to.x + to.w, y1: to.y + to.h }, 0, full.w / 8);
+    else throw new Error("stage-nav: flyTo takes assembly names or { x, y, w, h } in viewBox units");
+    if (state.follow) setFollow(false);
+    kick();
+  }
+  function home() {
+    target = { x: full.x, y: full.y, w: full.w };
+    picked = null;
+    if (state.follow) setFollow(false);
+    kick();
+  }
+  let picked = null;
+  if (zoomOnClick) stage.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-asm]");
+    const n = g && g.dataset.asm;
+    if (n && !(n === picked && target)) { flyTo([n]); picked = n; } else home();
+  });
+  const bar = doc.querySelector("[data-nav-bar]");
+  const say = (text) => { if (bar && bar.textContent !== text) bar.textContent = text; };
 
   let autoKey = "";
   function autoStep() {
@@ -153,32 +199,28 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     if (s) {
       stage.dataset.auto = "";
       const z = [...groups.find((g) => g.classList.contains("on")).classList].find((c) => c.startsWith("z-"));
-      stage.dataset.autoZone = z.slice(2);
+      if (z) stage.dataset.autoZone = z.slice(2); else delete stage.dataset.autoZone;
     } else { delete stage.dataset.auto; delete stage.dataset.autoZone; }
   }
 
   let moving = false;
   function camStep(dt) {
-    if (!state.follow) { moving = false; return; }
-    const s = current();
-    let goal = home;
-    if (s) {
-      const bs = s.map((n) => box[n]);
-      const x0 = Math.min(...bs.map((b) => b.x0)) - 40, y0 = Math.min(...bs.map((b) => b.y0)) - 40;
-      const x1 = Math.max(...bs.map((b) => b.x1)) + 40, y1 = Math.max(...bs.map((b) => b.y1)) + 40;
-      const w = Math.min(home.w, Math.max(x1 - x0, (y1 - y0) * ar, home.w / 3.2));
-      goal = { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - w / ar / 2, w };
-    }
+    let goal;
+    if (target) goal = target;
+    else if (state.follow) { const s = current(); goal = s ? frame(union(s), 40, full.w / 3.2) : full; }
+    else { moving = false; return; }
+    goal = clamp({ ...goal });
     const a = dt > 0 ? 1 - Math.exp(-dt * 2.6) : 0;
     vb.x += (goal.x - vb.x) * a; vb.y += (goal.y - vb.y) * a; vb.w += (goal.w - vb.w) * a;
     apply();
     moving = Math.abs(goal.x - vb.x) + Math.abs(goal.y - vb.y) + Math.abs(goal.w - vb.w) > 0.5;
+    if (!moving) { Object.assign(vb, goal); apply(); }
   }
 
   return {
     step(dt) { camStep(dt); autoStep(); },
     busy: () => moving || !!stage.dataset.focus,
-    reset, setFollow, setAuto, hover,
+    reset, home, flyTo, say, setFollow, setAuto, hover,
   };
 }
 

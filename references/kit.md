@@ -127,10 +127,11 @@ Rotations about z can't be done with a screen transform: rebuild the rotating pa
 | `ISO_CSS` | All the styles. `kit/iso.css` is the same text. |
 | `zonePalette(zones)` | From `kit/stage-nav.mjs`. Gives each `{ id, name, text, color? }` a stage colour token (`var(--anatomy-stage-n)`) unless it has one. |
 | `zoneGroup(zone, asm, svg)` | Wraps an assembly as `<g class="z z-<zone>" data-asm="<asm>">` for hover, highlight and the camera. |
-| `stageNavCss(zones)` | Stage tokens (dark, with light overrides), stage tints, hover and auto-highlight focus, the large readout bar, legend chips and buttons. Put it in the body. |
+| `stageNavCss(zones)` | Stage tokens (dark, with light overrides), stage tints, hover and auto-highlight focus (dimmed by tone, not opacity), the explanation bar, zoom clipping, legend chips and buttons. Put it in the body. |
+| `stageNavBar()` | The explanation bar, an `aria-live="polite"` element for under the drawing (`plateHtml` `body` or `below`). |
 | `stageNavHtml(zones, { labels })` | Legend chips and the auto-highlight, follow-camera and reset buttons, for under the plate. One zone gives just the reset button. |
 | `stageNavScript()` | The source of `installStageNav`, to inline: `script: kitScript() + stageNavScript() + live`. |
-| `installStageNav({ stage, svg, shot, zoneText, onHover, kick, labels })` | Runtime. Wheel zoom, drag pan, reset (`0`, double-click), hover focus, auto-highlight (`H`) and follow camera (`F`). Returns `{ step(dt), busy(), reset, setFollow, setAuto, hover }`. `references/stage-nav.md` has the contract. |
+| `installStageNav({ stage, svg, shot, zoneText, onHover, kick, labels, zoomOnClick })` | Runtime. Wheel zoom, drag pan, reset (`0`, double-click), `Esc` home, hover focus, auto-highlight (`H`) and follow camera (`F`). Returns `{ step(dt), busy(), reset, home, flyTo, say, setFollow, setAuto, hover }`. `references/stage-nav.md` has the contract. |
 
 ## 9. React components
 From `kit/react/draw.tsx`, which is server-safe:
