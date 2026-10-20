@@ -250,6 +250,35 @@ export function cylinder(cx: number, cy: number, radius: number, z: number, heig
 
 export const insetPlan = ({ x, y, w, d, r }: Plan, by: number): Plan => ({ x: x + by, y: y + by, w: w - by * 2, d: d - by * 2, r: Math.max(0, r - by) });
 
+export function offsetPath(points: Plane[], by: number, limit = 4): Plane[] {
+  const normal = (from: Plane, to: Plane): Plane | null => {
+    const dx = to[0] - from[0];
+    const dy = to[1] - from[1];
+    const length = Math.hypot(dx, dy);
+    return length ? [-dy / length, dx / length] : null;
+  };
+  const last = points.length - 1;
+  const toward = (index: number, step: number): Plane | null => {
+    for (let other = index + step; other >= 0 && other <= last; other += step) {
+      const found = step > 0 ? normal(points[index], points[other]) : normal(points[other], points[index]);
+      if (found) return found;
+    }
+    return null;
+  };
+  return points.map((point, index): Plane => {
+    const incoming = toward(index, -1);
+    const outgoing = toward(index, 1);
+    const before = incoming ?? outgoing;
+    const after = outgoing ?? incoming;
+    if (!before || !after) return [point[0], point[1]];
+    const sum: Plane = [before[0] + after[0], before[1] + after[1]];
+    const length = Math.hypot(sum[0], sum[1]);
+    const mitre: Plane = length > 1e-9 ? [sum[0] / length, sum[1] / length] : before;
+    const along = Math.max(mitre[0] * before[0] + mitre[1] * before[1], 1 / limit);
+    return [point[0] + (mitre[0] / along) * by, point[1] + (mitre[1] / along) * by];
+  });
+}
+
 export function onTop(points: Plane[], z: number, projection: Projection, closed = false) {
   return pathOf(
     points.map(([x, y]) => iso([x, y, z], projection)),

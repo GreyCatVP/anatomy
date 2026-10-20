@@ -53,6 +53,7 @@ All solids are prisms: a floor outline extruded straight up.
 | `roundedPlan(plan, steps)` | The same thing. |
 | `circleRing(cx, cy, r, steps)` | A circle outline as points. |
 | `insetPlan(plan, by)` | Shrinks a plan (use a negative `by` to grow it). Keeps the radius sensible. |
+| `offsetPath(points: Plane[], by, limit = 4)` | A floor polyline moved sideways by `by`, point for point: both rails of a track, the edges of a belt or a lane, from one centreline. A positive `by` moves a path that runs along +x toward +y. Corners are mitred so both legs stay `by` away, and a mitre never reaches past `limit` × `by` from its corner. |
 | `corners(plan, inset)` | Four floor points inset from the corners, for feet and screws. |
 | `boxCorners(plan, z0, z1)` | The eight corners, for `fitProjection`. |
 | `haloOf(plan, z, h, P)` | A fill path for a soft shadow: `<path class="iso-halo" d=…>`. |
