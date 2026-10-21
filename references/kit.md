@@ -80,6 +80,8 @@ What a `SolidPaths` contains:
 | `dotGrid(x, y, cols, rows, gap, z, P)` | Projected perforations. |
 | `topMatrix(at, z, P, along = "x")` | A transform that lays text flat on a top face, for `faceTextSvg`/`FaceText`. |
 | `sideMatrix(at, z, P, "left" \| "right")` | The same, on a vertical face. |
+| `sideDigit(digit, [u, z, w, h], at, "x" \| "y", P)` | One numeral as strokes in a box on the face at `x = at` or `y = at`, reading the way the face is seen (on an x face, from high y to low y). Draw it with `lineSvg(d, { free: true })`. |
+| `sideDigits(value, count, [u, z, w, h], gap, at, "x" \| "y", P)` | A row of `count` numerals across the box, odometer style (`12047` on four wheels shows `2047`): counter wheels, meter windows, a station number. `DIGIT_STROKES` holds the ten glyphs, `[u, z]` in a 1 × 2 box. |
 
 ## 5. Parts library
 | Function | Returns |
