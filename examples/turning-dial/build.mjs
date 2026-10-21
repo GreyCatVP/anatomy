@@ -256,7 +256,7 @@ const CLAMP_T = 1.1;
 for (const colour of Object.keys(PORTS)) along(`hand.clamp.${colour}`, frameOf([CLAMP_X, PORTS[colour], CABLE_Z], [1, 0, 0], [0, 0, 1]), -CLAMP_T / 2, CLAMP_T / 2, CLAMP_R, { owner: `cable.${colour}`, material: "brass" });
 plan("hand.clamp.left", { x: CLAMP_X - 1.3, y: -10.4, w: 2.6, d: 6.6, r: 0.6 }, COVER_TOP, CABLE_Z - CLAMP_R - COVER_TOP, { material: "gunmetal" });
 plan("hand.clamp.right", { x: CLAMP_X - 1.3, y: 6.9, w: 2.6, d: 3.4, r: 0.6 }, COVER_TOP, CABLE_Z - CLAMP_R - COVER_TOP, { material: "gunmetal" });
-const TERM = { x: 7.3, y: PORTS.green - 1.6, w: 2.6, d: 3.2, r: 0.5 };
+const TERM = { x: 0.0, y: PORTS.green - 1.6, w: 2.6, d: 3.2, r: 0.5 };
 plan("hand.terminal", TERM, COVER_TOP, CABLE_Z + 1.8 - COVER_TOP, { bevel: 0.3, material: "gunmetal" });
 
 const PIST_Y = 0;
@@ -443,7 +443,7 @@ if (argv.includes("--audit")) {
       { name: "tap", at: (t) => follow({ dial: 40 + 12 * t, lift: tapAt(t) }), from: 0, to: 4, frame: 1 / 60 },
       { name: "break", at: (t) => follow({ dial: 100 + 12 * t, lift: 0.3, pod: breakAt(t) }), from: 0, to: BREAK_END, frame: 1 / 60 },
     ],
-    crowd: [["cable.red", "hand.f1.p2"], ["cable.red", "hand.f2.p1"], ["cable.red", "hand.f2.p2"], ["cable.red", "hand.thumb.link"], ["cable.blue", "hand.f2.p1"], ["cable.blue", "hand.f3.p2"]], quick: argv.includes("--quick"), only: argv.find((a) => a.startsWith("--only="))?.slice(7).split(",") ?? null, log: argv.includes("--verbose") ? (text) => console.log(`  … ${text}`) : null });
+    crowd: [["cable.red", "hand.f1.p1"], ["cable.red", "hand.f1.p2"], ["cable.red", "hand.f2.p1"], ["cable.red", "hand.f2.p2"], ["cable.red", "hand.thumb.link"], ["cable.blue", "hand.f2.p1"], ["cable.blue", "hand.f3.p1"], ["cable.blue", "hand.f3.p2"]], quick: argv.includes("--quick"), only: argv.find((a) => a.startsWith("--only="))?.slice(7).split(",") ?? null, log: argv.includes("--verbose") ? (text) => console.log(`  … ${text}`) : null });
 }
 
 const LABEL = "A combination dial on a raised door plate. A small robot hand lies on the dial's hub and turns with it: a palm with a cover plate, a connector block, a piston on two saddles with a ball joint, three jointed fingers whose tips rest on the dial face, and a thumb on a ball knuckle.";
