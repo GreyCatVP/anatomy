@@ -37,6 +37,7 @@ ${focus}{filter:drop-shadow(0 0 5px var(--zc))}
 .iso-stage{cursor:grab;touch-action:pan-y;outline:none}
 .iso-stage.dragging{cursor:grabbing}
 .iso-stage svg[data-zoomed]{overflow:hidden}
+.iso-stage [data-asm][tabindex]:focus-visible{outline:2px solid var(--anatomy-hi);outline-offset:3px}
 .nav-bar{margin-top:18px;min-height:76px;display:flex;align-items:center;padding:14px 22px;box-sizing:border-box;font-size:22px;line-height:1.45;letter-spacing:.01em;color:var(--anatomy-strong);background:color-mix(in srgb,var(--zc,var(--anatomy-muted)) 10%,var(--anatomy-card));border-left:5px solid var(--zc,var(--anatomy-lo));transition:background .3s,border-color .3s}
 @media (max-width:560px){.nav-bar{font-size:16px;min-height:60px;padding:10px 14px}}
 .zl{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0;font-size:13px}
@@ -64,6 +65,7 @@ export const stageNavBar = () => `<div class="nav-bar" data-nav-bar aria-live="p
 export function installStageNav({ stage, svg, shot = () => null, onHover = () => {}, zoneText = {}, kick = () => {}, labels = {}, zoomOnClick = false }) {
   const L = { on: "on", off: "off", ...labels };
   const doc = stage.ownerDocument;
+  const still = doc.defaultView.matchMedia("(prefers-reduced-motion: reduce)");
   const VB0 = svg.viewBox.baseVal;
   const full = { x: VB0.x, y: VB0.y, w: VB0.width, h: VB0.height };
   const vb = { ...full };
@@ -181,11 +183,25 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     kick();
   }
   let picked = null;
-  if (zoomOnClick) stage.addEventListener("click", (e) => {
-    const g = e.target.closest("[data-asm]");
-    const n = g && g.dataset.asm;
-    if (n && !(n === picked && target)) { flyTo([n]); picked = n; } else home();
-  });
+  const pick = (n) => { if (n && !(n === picked && target)) { flyTo([n]); picked = n; } else home(); };
+  if (zoomOnClick) {
+    const named = new Set();
+    groups.forEach((g) => {
+      if (named.has(g.dataset.asm)) return;
+      named.add(g.dataset.asm);
+      g.setAttribute("tabindex", "0");
+      if (!g.hasAttribute("role")) g.setAttribute("role", "button");
+      if (!g.hasAttribute("aria-label")) g.setAttribute("aria-label", g.dataset.asm);
+    });
+    stage.addEventListener("click", (e) => { const g = e.target.closest("[data-asm]"); pick(g && g.dataset.asm); });
+    stage.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const g = e.target.closest && e.target.closest("[data-asm][tabindex]");
+      if (!g) return;
+      e.preventDefault();
+      pick(g.dataset.asm);
+    });
+  }
   const bar = doc.querySelector("[data-nav-bar]");
   const say = (text) => { if (bar && bar.textContent !== text) bar.textContent = text; };
 
@@ -210,6 +226,7 @@ export function installStageNav({ stage, svg, shot = () => null, onHover = () =>
     else if (state.follow) { const s = current(); goal = s ? frame(union(s), 40, full.w / 3.2) : full; }
     else { moving = false; return; }
     goal = clamp({ ...goal });
+    if (still.matches) { Object.assign(vb, goal); apply(); moving = false; return; }
     const a = dt > 0 ? 1 - Math.exp(-dt * 2.6) : 0;
     vb.x += (goal.x - vb.x) * a; vb.y += (goal.y - vb.y) * a; vb.w += (goal.w - vb.w) * a;
     apply();

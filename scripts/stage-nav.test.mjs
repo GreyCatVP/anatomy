@@ -55,3 +55,11 @@ test("stageNavScript inlines a parseable runtime", () => {
   assert.match(src, /^function installStageNav\(/);
   assert.doesNotThrow(() => new Function(src));
 });
+
+test("stage-nav jumps under reduced motion and makes parts keyboard targets with zoomOnClick", () => {
+  const src = stageNavScript();
+  assert.match(src, /matchMedia\("\(prefers-reduced-motion: reduce\)"\)/);
+  assert.match(src, /setAttribute\("tabindex", "0"\)/);
+  assert.match(src, /e\.key !== "Enter" && e\.key !== " "/);
+  assert.match(stageNavCss(zones), /\[data-asm\]\[tabindex\]:focus-visible\{outline:/);
+});

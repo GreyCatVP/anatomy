@@ -37,7 +37,8 @@ In the frame loop call `nav.step(dt)` after drawing, and keep looping while `nav
 
 - `nav.flyTo(names | { x, y, w, h })` eases the view to the merged box of those assemblies (with the follow camera's 40-unit margin, at most 3.2×), or to a box in `viewBox` units (at most 8×). It turns the follow camera off, and a wheel, a drag, `F` or `0` takes over from it. An unknown name throws.
 - `nav.home()` eases back to the full view; `Esc` calls it. `nav.reset()` jumps there.
-- `zoomOnClick: true` makes a click or tap on an assembly fly to it, and a second click on it, or a click on empty space, fly home. It is off by default, because many figures already use clicks. On a phone, where the wheel and drag do nothing, this or your own `flyTo` is the only zoom, so turn it on or wire one.
+- `zoomOnClick: true` makes a click or tap on an assembly fly to it, and a second click on it, or a click on empty space, fly home. It is off by default, because many figures already use clicks. On a phone, where the wheel and drag do nothing, this or your own `flyTo` is the only zoom, so turn it on or wire one. It also makes the first `data-asm` group of each assembly focusable (`tabindex="0"`, `role="button"`, and `aria-label` set to the name unless the group has its own), so Tab reaches each part and Enter or Space acts like a click. Give each group an `aria-label` that reads as a sentence fragment, not an id.
+- Under `prefers-reduced-motion: reduce`, `flyTo`, `home` and the follow camera jump to the goal in one write instead of easing.
 - `nav.say(text)` writes the bar and skips the write when the text has not changed, so a screen reader is not interrupted every frame.
 
 - `zoneText` maps each zone to the sentence for the bar on hover; `onHover(zone, text)` lets the figure decide what the bar shows, usually through `nav.say`. On touch, a tap keeps the focus until the next tap instead of losing it when the finger lifts.
