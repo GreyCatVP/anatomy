@@ -16,6 +16,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 
 ### Fixed
 
+- `print.mjs` rejects a `--format` or `--out` left without its value, and an unknown `--format`, before it reads the spec. A bare `--format` used to fall back to the spec's format, or to `poster` when the spec names none, and still exit 0, so the sheet printed was not the one asked for and nothing said so; a misspelled `--format` was reported only after the spec had loaded.
 - Line-end audits follow cubic and quadratic strokes with a bounded screen-space approximation, so lines attached between curve samples are not reported as loose.
 
 - `drive.mjs` waits for the page to load (up to 10 s) before it runs the first action, and gives up with an error when Chrome leaves a request unanswered for 60 s instead of hanging, as `capture.mjs` now does.
