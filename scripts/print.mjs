@@ -217,14 +217,19 @@ async function main() {
   }
   const rest = [];
   const options = { letter: false, png: false, out: null, format: null };
+  const valueOf = (flag, value) => {
+    if (value === undefined) throw new Error(`${flag} needs a value`);
+    return value;
+  };
   for (let index = 0; index < argv.length; index++) {
     const arg = argv[index];
     if (arg === "--letter") options.letter = true;
     else if (arg === "--png") options.png = true;
-    else if (arg === "--out") options.out = argv[++index];
-    else if (arg === "--format") options.format = argv[++index];
+    else if (arg === "--out") options.out = valueOf(arg, argv[++index]);
+    else if (arg === "--format") options.format = valueOf(arg, argv[++index]);
     else rest.push(arg);
   }
+  if (options.format !== null && options.format !== "all" && !FORMATS.includes(options.format)) throw new Error(`unknown format "${options.format}"; use one of ${FORMATS.join(", ")} or all`);
   const specFile = resolve(rest[0]);
   const spec = (await import(pathToFileURL(specFile).href)).default;
   const dir = dirname(specFile);
