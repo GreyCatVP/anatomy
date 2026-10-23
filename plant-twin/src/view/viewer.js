@@ -182,7 +182,7 @@ export class Viewer {
     let lastMove = 0;
     dom.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
     dom.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse' || e.buttons) return;
+      if (this.walk?.active || e.pointerType !== 'mouse' || e.buttons) return;
       const now = performance.now();
       if (now - lastMove < 70) return;
       lastMove = now;
@@ -190,12 +190,13 @@ export class Viewer {
     });
     dom.addEventListener('pointerleave', () => this.hover(null));
     dom.addEventListener('pointerup', (e) => {
-      if (!down) return;
+      if (!down || this.walk?.active) { down = null; return; }
       const moved = Math.hypot(e.clientX - down.x, e.clientY - down.y);
       if (moved < 6 && performance.now() - down.t < 500) this.select(this.pick(e), false);
       down = null;
     });
     dom.addEventListener('dblclick', (e) => {
+      if (this.walk?.active) return;
       const hit = this.pick(e);
       if (hit) this.focus(hit);
     });
@@ -207,6 +208,23 @@ export class Viewer {
     this.ray.setFromCamera(this.ndc, this.camera);
     const list = this.pickables.filter((m) => m.visible && !(m.material.transparent && m.material.opacity < 0.2));
     const hits = this.ray.intersectObjects(list, false);
+    return hits.length ? hits[0].object.userData.eq : null;
+  }
+
+  // equipment under the screen centre within `max` metres (walk mode crosshair)
+  pickCenter(max = 18) {
+    this.ndc.set(0, 0);
+    this.ray.setFromCamera(this.ndc, this.camera);
+    this.ray.far = max;
+    const cp = this.camera.position;
+    const sph = this._sph || (this._sph = new THREE.Sphere());
+    const list = this.pickables.filter((m) => {
+      if (!m.visible || !m.geometry.boundingSphere) return false;
+      sph.copy(m.geometry.boundingSphere).applyMatrix4(m.matrixWorld);
+      return sph.center.distanceTo(cp) - sph.radius < max;
+    });
+    const hits = this.ray.intersectObjects(list, false);
+    this.ray.far = Infinity;
     return hits.length ? hits[0].object.userData.eq : null;
   }
 
@@ -309,6 +327,8 @@ export class Viewer {
 
   // per-frame upkeep: camera flight, wall fade, label LOD
   frame(dt) {
+    const walking = !!(this.walk && this.walk.active);
+    if (walking) { this.walk.update(dt); this.fly = null; }
     if (this.fly) {
       const f = this.fly;
       const u = Math.min(1, (performance.now() - f.t0) / f.ms);
@@ -318,10 +338,10 @@ export class Viewer {
       if (u >= 1) this.fly = null;
       this.dirty = true;
     }
-    this.controls.update();
+    if (!walking) this.controls.update();
     const cp = this.camera.position;
     // adaptive near plane: whatever stands right in front of the lens is cut away in close-ups
-    const near = Math.min(6, Math.max(0.3, cp.distanceTo(this.controls.target) * 0.28));
+    const near = walking ? 0.05 : Math.min(6, Math.max(0.3, cp.distanceTo(this.controls.target) * 0.28));
     if (Math.abs(near - this.camera.near) / this.camera.near > 0.08) { this.camera.near = near; this.camera.updateProjectionMatrix(); this.dirty = true; }
     const toCam = cp.clone().sub(this.controls.target).normalize();
     for (const f of this.faces) {
@@ -334,13 +354,13 @@ export class Viewer {
     if (this._lt > 0.15) {
       this._lt = 0;
       const v = new THREE.Vector3();
-      const dist = cp.distanceTo(this.controls.target);
+      const dist = walking ? 0 : cp.distanceTo(this.controls.target);
       const W = this.host.clientWidth, H = this.host.clientHeight;
       const cand = [];
       for (const e of this.tags) {
         e.worldAnchor(v);
         const d = v.distanceTo(cp);
-        const want = e === this.selected || e === this.hovered || (d < 34 && dist < 48) || (this.mode !== 'model' && dist < 70 && d < 60);
+        const want = walking ? d < 12 || e === this.selected : e === this.selected || e === this.hovered || (d < 34 && dist < 48) || (this.mode !== 'model' && dist < 70 && d < 60);
         const dot = e.tagEl.firstChild;
         const s = e.status;
         if (dot.dataset.s !== s) { dot.dataset.s = s; dot.style.background = STATUS_COLORS[s] || STATUS_COLORS.off; }
@@ -352,7 +372,7 @@ export class Viewer {
       }
       for (const z of this.zoneTags) {
         z.getWorldPosition(v);
-        const far = dist > 40;
+        const far = !walking && dist > 40;
         if (!far) { z.visible = false; continue; }
         v.project(this.camera);
         if (v.z > 1) { z.visible = false; continue; }
@@ -368,7 +388,7 @@ export class Viewer {
         if (show) placed.push(r);
       }
       // overhead services go translucent in close-ups so they do not hide the machines
-      if (this.plant) this.plant.servicesMats.set({ ghost: dist < 24 && this.mode !== 'xray' });
+      if (this.plant) this.plant.servicesMats.set({ ghost: !walking && dist < 24 && this.mode !== 'xray' });
     }
   }
 

@@ -12,7 +12,7 @@ const out = await build({
   minify: true,
   write: false,
   target: 'es2020',
-  external: ['three', 'three/addons/*'],
+  external: ['three', 'three/addons/*', 'three-mesh-bvh'],
   legalComments: 'none',
 });
 const js = out.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');

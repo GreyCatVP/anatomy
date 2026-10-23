@@ -12,7 +12,8 @@
 <script type="importmap">
 { "imports": {
   "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.7.6/build/index.module.js"
 } }
 </script>
 </head>
@@ -48,6 +49,18 @@
       <div class="legend" id="legend"></div>
       <div class="hint">ЛКМ вращение · ПКМ сдвиг · колесо масштаб · двойной клик к объекту · пробел пауза</div>
       <div class="tip" id="tip" hidden></div>
+      <div class="walkhud" id="walkhud" hidden>
+        <div class="cross" aria-hidden="true"></div>
+        <div class="aim" id="aim" hidden></div>
+        <div class="walkbar">
+          <button type="button" class="btn primary" id="wExit">Выйти из прогулки</button>
+          <label class="spot"><span>Перейти</span><select id="wSpot" aria-label="Перейти к участку"></select></label>
+        </div>
+        <div class="walkstart" id="walkStart">Щёлкните по сцене, чтобы управлять взглядом мышью<br><small>WASD — ходьба · Shift — бег · пробел — прыжок · E — карточка станка · Esc — выход</small></div>
+        <canvas class="minimap" id="minimap" aria-label="Положение на плане цеха"></canvas>
+        <div class="stick" id="stick" aria-hidden="true"><i></i></div>
+      </div>
+      <div class="walkbusy" id="walkBusy" hidden>Подготовка прогулки: расчёт столкновений…</div>
       <div class="mobile-tabs"><button type="button" id="mTree">Оборудование</button><button type="button" id="mInsp">Инспектор</button></div>
       <div class="sheet" id="cap" hidden></div>
       <div class="loading" id="loading"><div>Сборка цифрового двойника<div class="barline"><i></i></div></div></div>

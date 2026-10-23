@@ -6,6 +6,8 @@ import { RECIPES } from '../sim/model.js';
 import { readings, STATUS_TEXT } from '../sim/telemetry.js';
 import { capacity } from '../sim/capacity.js';
 import { STATUS_COLORS } from '../core/look.js';
+import { WalkMode, SPOTS } from '../view/walk.js';
+import { HALL, ZONES as ZN, EQUIPMENT } from '../plant/layout.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -43,6 +45,7 @@ export class UI {
     this.bindSim();
     this.bindTabs();
     this.bindHover();
+    this.bindWalk();
     viewer.on('select', (e) => this.onSelect(e));
     this.renderInspector();
     this._acc = 0;
@@ -86,6 +89,7 @@ export class UI {
     sp.addEventListener('change', () => (this.speed = +sp.value));
     window.addEventListener('keydown', (e) => {
       if (e.target.closest('input, select, textarea')) return;
+      if (this.walk.active) return;
       if (e.code === 'Space') { e.preventDefault(); this.playing = !this.playing; sync(); }
       if (e.key === 'Escape') this.v.select(null);
       if (e.key === 'f' || e.key === 'F') { if (this.v.selected) this.v.focus(this.v.selected); }
@@ -154,7 +158,7 @@ export class UI {
     tb.innerHTML = `
       <div class="group tree-toggle"><button type="button" id="treeBtn">Оборудование</button></div>
       <div class="group" role="group" aria-label="Вид"><span>Вид</span>
-        <button type="button" data-view="overview">Обзор</button><button type="button" data-view="plan">План</button><button type="button" data-view="iso">Изометрия</button>
+        <button type="button" data-view="overview">Обзор</button><button type="button" data-view="plan">План</button><button type="button" data-view="iso">Изометрия</button><button type="button" id="walkBtn" class="walk-btn">Прогулка</button>
         <select id="zoneSel" aria-label="Перейти к участку" style="border:0;background:none;font:500 12px var(--f-sans);color:var(--ink-2);padding:0 4px;max-width:170px"><option value="">Участок…</option>${zones}</select>
       </div>
       <div class="group" role="group" aria-label="Режим отображения"><span>Режим</span>
@@ -170,6 +174,7 @@ export class UI {
       const b = ev.target.closest('button');
       if (!b) return;
       if (b.id === 'treeBtn') { $('#body').classList.toggle('tree-open'); return; }
+      if (b.id === 'walkBtn') { this.startWalk(0); return; }
       if (b.dataset.view) this.v.view(b.dataset.view);
       if (b.dataset.mode) {
         for (const x of tb.querySelectorAll('[data-mode]')) x.setAttribute('aria-pressed', String(x === b));
@@ -425,9 +430,116 @@ export class UI {
       : `Чтобы загрузить цех полностью при текущем режиме, нужен портфель около ${i0(c.netT)} т/мес. Сейчас ограничивает участок «${c.bottleneck.name}».`;
   }
 
+  // ---------- first-person walk
+  bindWalk() {
+    const w = (this.walk = new WalkMode(this.v));
+    this.v.walk = w;
+    const spot = $('#wSpot');
+    spot.innerHTML = SPOTS.map(([name], i) => `<option value="${i}">${esc(name)}</option>`).join('');
+    spot.addEventListener('change', () => { w.teleport(+spot.value); spot.blur(); });
+    $('#wExit').addEventListener('click', () => w.exit());
+    w.on('change', (on) => {
+      document.body.classList.toggle('walking', on);
+      $('#walkhud').hidden = !on;
+      if (on) {
+        this._roofWas = this.v.hall.roof.visible;
+        this.v.setLayer('roof', true);
+        this.v.select(null);
+        spot.value = String(w.spot || 0);
+        this.drawMinimapBase();
+      } else {
+        this.v.setLayer('roof', !!this._roofWas);
+        $('#aim').hidden = true;
+      }
+    });
+    w.on('lock', (locked) => { $('#walkStart').hidden = locked || matchMedia('(pointer: coarse)').matches; });
+    w.on('aim', (e) => {
+      const el = $('#aim');
+      if (!e) { el.hidden = true; return; }
+      el.innerHTML = `<i class="dot" style="background:${STATUS_COLORS[e.status] || STATUS_COLORS.off}"></i><b>${e.tag}</b><span>${esc(e.def.name)}</span><em>${matchMedia('(pointer: coarse)').matches ? 'нажмите' : 'E'} — карточка</em>`;
+      el.hidden = false;
+    });
+    w.on('pick', (e) => {
+      this.v.select(e, false);
+      if (matchMedia('(max-width: 760px)').matches) $('#body').classList.add('insp-open');
+    });
+    // virtual stick for touch screens
+    const stick = $('#stick'), knob = stick.firstElementChild;
+    let id = null, c = null;
+    const move = (t) => {
+      const dx = t.clientX - c[0], dy = t.clientY - c[1];
+      const r = Math.min(1, Math.hypot(dx, dy) / 46);
+      const a = Math.atan2(dy, dx);
+      w.stick.x = Math.cos(a) * r; w.stick.y = Math.sin(a) * r;
+      knob.style.transform = `translate(${w.stick.x * 46}px, ${w.stick.y * 46}px)`;
+    };
+    stick.addEventListener('touchstart', (e) => { const t = e.changedTouches[0]; id = t.identifier; const r = stick.getBoundingClientRect(); c = [r.left + r.width / 2, r.top + r.height / 2]; move(t); e.preventDefault(); }, { passive: false });
+    stick.addEventListener('touchmove', (e) => { for (const t of e.changedTouches) if (t.identifier === id) move(t); e.preventDefault(); }, { passive: false });
+    const end = (e) => { for (const t of e.changedTouches) if (t.identifier === id) { id = null; w.stick.x = w.stick.y = 0; knob.style.transform = ''; } };
+    stick.addEventListener('touchend', end);
+    stick.addEventListener('touchcancel', end);
+  }
+
+  async startWalk(spot) {
+    if (this.walk.active) return;
+    const busy = $('#walkBusy');
+    busy.hidden = false;
+    await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 30)));
+    try { await this.walk.enter(spot); } catch (err) { console.error(err); busy.textContent = 'Не удалось подготовить прогулку: нет связи с библиотекой столкновений.'; setTimeout(() => (busy.hidden = true), 4000); return; }
+    busy.hidden = true;
+  }
+
+  // plan of the hall for the mini-map, drawn once
+  drawMinimapBase() {
+    const cv = $('#minimap');
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const W = cv.clientWidth || 260, Hh = cv.clientHeight || 86;
+    cv.width = W * dpr; cv.height = Hh * dpr;
+    const pad = 6;
+    const sx = (W - pad * 2) / (HALL.x1 - HALL.x0), sz = (Hh - pad * 2) / (HALL.z1 - HALL.z0);
+    const k = Math.min(sx, sz);
+    const ox = pad + ((W - pad * 2) - (HALL.x1 - HALL.x0) * k) / 2, oz = pad + ((Hh - pad * 2) - (HALL.z1 - HALL.z0) * k) / 2;
+    this.mm = { k, ox, oz, dpr, W, H: Hh };
+    const base = document.createElement('canvas');
+    base.width = cv.width; base.height = cv.height;
+    const g = base.getContext('2d');
+    g.scale(dpr, dpr);
+    g.fillStyle = 'rgba(255,255,255,0.94)';
+    g.fillRect(0, 0, W, Hh);
+    const P = (x, z) => [ox + (x - HALL.x0) * k, oz + (z - HALL.z0) * k];
+    g.strokeStyle = '#c9cec9'; g.lineWidth = 1;
+    for (const z of ZN) { if (z.outdoor) continue; const [a, b] = P(z.x0, z.z0), [c, d] = P(z.x1, z.z1); g.strokeRect(a, b, c - a, d - b); }
+    g.strokeStyle = '#4b555c'; g.lineWidth = 1.4;
+    { const [a, b] = P(HALL.x0, HALL.z0), [c, d] = P(HALL.x1, HALL.z1); g.strokeRect(a, b, c - a, d - b); }
+    g.fillStyle = '#9aa3a9';
+    for (const e of EQUIPMENT) {
+      if (!e.pos || e.type === 'container' || e.type === 'forklift' || e.zone === '910') continue;
+      const [a, b] = P(e.pos[0], e.pos[2]);
+      g.fillRect(a - 1.2, b - 1.2, 2.4, 2.4);
+    }
+    this.mmBase = base;
+  }
+
+  drawMinimap() {
+    if (!this.mmBase) return;
+    const cv = $('#minimap');
+    const g = cv.getContext('2d');
+    const { k, ox, oz, dpr } = this.mm;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.drawImage(this.mmBase, 0, 0);
+    g.scale(dpr, dpr);
+    const [x, z, yaw] = this.walk.where();
+    const px = ox + (x - HALL.x0) * k, pz = oz + (z - HALL.z0) * k;
+    g.fillStyle = 'rgba(36, 86, 201, 0.18)';
+    g.beginPath(); g.moveTo(px, pz); g.arc(px, pz, 16, yaw - 0.55, yaw + 0.55); g.closePath(); g.fill();
+    g.fillStyle = '#2456c9';
+    g.beginPath(); g.arc(px, pz, 3.2, 0, Math.PI * 2); g.fill();
+  }
+
   // ---------- per-frame
   tick() {
     const now = performance.now();
+    if (this.walk && this.walk.active) this.drawMinimap();
     if (now - this._acc > 250) {
       this._acc = now;
       this.updateKpis();
