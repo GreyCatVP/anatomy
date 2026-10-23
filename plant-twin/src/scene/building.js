@@ -71,11 +71,13 @@ export function buildHall(look) {
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(36, -0.02, 18);
   ground.receiveShadow = true;
+  ground.name = 'ground';
   root.add(ground);
   const slab = new THREE.Mesh(new THREE.PlaneGeometry(X1 - X0, Z1 - Z0), new THREE.MeshStandardMaterial({ color: p.floor, roughness: 0.95 }));
   slab.rotation.x = -Math.PI / 2;
   slab.position.set((X0 + X1) / 2, 0, ZM);
   slab.receiveShadow = true;
+  slab.name = 'slab';
   root.add(slab);
 
   // aprons and pads outside
@@ -85,6 +87,7 @@ export function buildHall(look) {
     m.rotation.x = -Math.PI / 2;
     m.position.set(x, -0.005, z);
     m.receiveShadow = true;
+    m.name = 'apron';
     root.add(m);
   }
 
@@ -96,6 +99,7 @@ export function buildHall(look) {
     new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(jp, 3)),
     new THREE.LineBasicMaterial({ color: p.floorLine, transparent: true, opacity: 0.7 }),
   );
+  joints.name = 'joints';
   root.add(joints);
 
   // painted zone borders, walkways and zone names
@@ -112,7 +116,9 @@ export function buildHall(look) {
   }
   // pedestrian walkway along the central aisle, dashed
   for (const z of [14.3, 21.7]) for (let x = 0.5; x < 68; x += 1.2) marks.box(x + 0.4, 0.006, z, 0.8, 0.004, 0.1, { layer: 'dark', edges: false });
-  root.add(marks.build(paint, { edges: false, castShadow: false }));
+  const markings = marks.build(paint, { edges: false, castShadow: false });
+  markings.name = 'floor-markings';
+  root.add(markings);
 
   const zoneLabels = new THREE.Group();
   zoneLabels.name = 'zone-labels';
@@ -148,6 +154,7 @@ export function buildHall(look) {
   const smats = look.createSet('struct');
   const s = new Assembly('struct');
   const rs = new Assembly('struct');
+  const lum = new Assembly('struct');
   for (let x = X0; x <= X1 + 0.01; x += 6) {
     for (const z of [Z0, ZM, Z1]) {
       const zc = z === Z0 ? Z0 + 0.25 : z === Z1 ? Z1 - 0.25 : ZM;
@@ -191,8 +198,8 @@ export function buildHall(look) {
   for (let x = X0 + 3; x < X1; x += 6) {
     for (const z of [4.5, 13.5, 22.5, 31.5]) {
       const y = roofY(z) - 1.6;
-      rs.rod([x, y + 0.2, z], [x, roofY(z) - 0.35, z], 0.012, { edges: false });
-      rs.lathe(x, y, z, [[0.0001, 0], [0.24, 0.0], [0.2, 0.1], [0.08, 0.18], [0.08, 0.2]], { seg: 20 });
+      lum.rod([x, y + 0.2, z], [x, roofY(z) - 0.35, z], 0.012, { edges: false });
+      lum.lathe(x, y, z, [[0.0001, 0], [0.24, 0.0], [0.2, 0.1], [0.08, 0.18], [0.08, 0.2]], { seg: 20 });
     }
   }
   // plinth
@@ -202,8 +209,13 @@ export function buildHall(look) {
   s.box(6, 2.0, 6.5, 0.2, 4.0, 13);
   s.box(3, 2.0, 13, 6, 4.0, 0.2);
   s.box(3, 4.05, 6.5, 6.2, 0.1, 13.2);
-  root.add(s.build(smats));
+  const frame = s.build(smats);
+  frame.name = 'steel-frame';
+  root.add(frame);
   const roofFrame = rs.build(smats);
+  const luminaires = lum.build(smats);
+  luminaires.name = 'luminaires';
+  roofFrame.add(luminaires);
   roofFrame.name = 'roof-frame';
   roofFrame.visible = false;
   root.add(roofFrame);
@@ -225,24 +237,24 @@ export function buildHall(look) {
     for (let k = 1; k < Math.round(h / 0.6); k++) a.box(x, k * 0.6, z, w, 0.02, 0.08, { ...o, layer: 'dark', edges: false });
   };
   face('north', [0, 0, -1], (a) => {
-    a.box((X0 + X1) / 2, (EAVE + 0.6) / 2, Z0, X1 - X0, EAVE - 0.6, 0.04);
+    a.box((X0 + X1) / 2, (EAVE + 0.6) / 2, Z0, X1 - X0, EAVE - 0.6, 0.04, { layer: 'cladding' });
     for (let x = X0 + 3; x < X1; x += 6) a.box(x, 6.9, Z0 - 0.02, 4.6, 1.2, 0.02, { layer: 'glass' });
   });
   face('south', [0, 0, 1], (a) => {
-    a.box((X0 + X1) / 2, (EAVE + 0.6) / 2, Z1, X1 - X0, EAVE - 0.6, 0.04);
+    a.box((X0 + X1) / 2, (EAVE + 0.6) / 2, Z1, X1 - X0, EAVE - 0.6, 0.04, { layer: 'cladding' });
     for (let x = X0 + 3; x < X1; x += 6) a.box(x, 6.9, Z1 + 0.02, 4.6, 1.2, 0.02, { layer: 'glass' });
     for (const x of [88.5, 93.0]) doorPanel(a, x, Z1 + 0.05, 3.0, 3.4, 'x');
   });
   face('west', [-1, 0, 0], (a) => {
     const sh = new THREE.Shape();
     sh.moveTo(Z0, 0.6); sh.lineTo(Z1, 0.6); sh.lineTo(Z1, EAVE); sh.lineTo(ZM, RIDGE); sh.lineTo(Z0, EAVE); sh.closePath();
-    a.add(GEO.prism('gable', () => sh, 0.04, 1), X0, 0, 0, { ry: -Math.PI / 2 });
+    a.add(GEO.prism('gable', () => sh, 0.04, 1), X0, 0, 0, { ry: -Math.PI / 2, layer: 'cladding' });
     doorPanel(a, X0 - 0.05, 27, 3.2, 3.6, 'z');
   });
   face('east', [1, 0, 0], (a) => {
     const sh = new THREE.Shape();
     sh.moveTo(Z0, 0.6); sh.lineTo(Z1, 0.6); sh.lineTo(Z1, EAVE); sh.lineTo(ZM, RIDGE); sh.lineTo(Z0, EAVE); sh.closePath();
-    a.add(GEO.prism('gable', () => sh, 0.04, 1), X1, 0, 0, { ry: -Math.PI / 2 });
+    a.add(GEO.prism('gable', () => sh, 0.04, 1), X1, 0, 0, { ry: -Math.PI / 2, layer: 'cladding' });
   });
   // fire wall between the raw store and the hall, with two door openings
   face('firewall', [0, 0, 0], (a) => {
@@ -253,7 +265,7 @@ export function buildHall(look) {
       hole.moveTo(za, 0.05); hole.lineTo(za, h); hole.lineTo(zb, h); hole.lineTo(zb, 0.05); hole.closePath();
       sh.holes.push(hole);
     }
-    a.add(GEO.prism('firewall', () => sh, 0.2, 1), 0, 0, 0, { ry: -Math.PI / 2 });
+    a.add(GEO.prism('firewall', () => sh, 0.2, 1), 0, 0, 0, { ry: -Math.PI / 2, layer: 'cladding' });
     for (const z of [15, 21, 25.5, 28.5]) a.blk(0, 0, z, 0.3, z < 22 ? 4.2 : 3.6, 0.12, { layer: 'struct' });
     a.blk(0, 4.2, 18, 0.3, 0.12, 6.2, { layer: 'struct' });
     a.blk(0, 3.6, 27, 0.3, 0.12, 3.2, { layer: 'struct' });
@@ -262,7 +274,7 @@ export function buildHall(look) {
 
   // roof sheeting (toggle)
   const roofMats = look.createSet('clad');
-  const r = new Assembly('glass');
+  const r = new Assembly('cladding');
   for (const [za, zb] of [[Z0, ZM], [ZM, Z1]]) {
     const ya = roofY(za) + 0.08, yb = roofY(zb) + 0.08;
     r.box((X0 + X1) / 2, (ya + yb) / 2, (za + zb) / 2, X1 - X0 + 0.6, 0.04, Math.hypot(zb - za, yb - ya) + 0.3, { rx: -Math.atan2(yb - ya, zb - za) });
@@ -283,7 +295,9 @@ export function buildHall(look) {
     dock.blk(x, 3.8, Z1 + 0.55, 3.8, 0.6, 1.0, { layer: 'dark' });
   }
   dock.blk(X0 - 0.55, 0, 27, 1.0, 3.9, 3.8, { layer: 'dark' });
-  root.add(dock.build(smats));
+  const docks = dock.build(smats);
+  docks.name = 'docks';
+  root.add(docks);
 
   return { root, faces, roof, roofFrame, zoneLabels, axes };
 }

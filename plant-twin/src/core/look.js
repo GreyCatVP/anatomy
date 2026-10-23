@@ -57,6 +57,7 @@ export class MatSet {
   }
 
   get(layer) {
+    if (layer === 'cladding') return this.m.glass;
     return this.m[layer] || this.m.body;
   }
 
@@ -74,7 +75,7 @@ export class MatSet {
 
   applyShadow() {
     const ghost = this.state.ghost || this.state.mode === 'xray';
-    for (const mesh of this.meshes) mesh.castShadow = !ghost && mesh.userData.layer !== 'glass';
+    for (const mesh of this.meshes) mesh.castShadow = !ghost && mesh.userData.layer !== 'glass' && mesh.userData.layer !== 'cladding';
   }
 
   refresh() {

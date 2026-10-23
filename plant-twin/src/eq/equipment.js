@@ -19,10 +19,12 @@ function lampMat(color, on) {
       transparent: !on,
       opacity: on ? 1 : 0.85,
     });
+    lampMats[k].name = `M_Lamp_${color[0].toUpperCase()}${color.slice(1)}_${on ? 'On' : 'Off'}`;
   }
   return lampMats[k];
 }
 
+let capMat = null;
 const segGeo = () => cachedGeo('lampseg', () => new THREE.CylinderGeometry(0.045, 0.045, 0.075, 16));
 const capGeo = () => cachedGeo('lampcap', () => new THREE.CylinderGeometry(0.03, 0.045, 0.025, 16));
 
@@ -40,7 +42,7 @@ export class StackLight {
     });
     const cap = new THREE.Mesh(capGeo(), lampMat('red', false));
     cap.position.y = 0.04 + 3 * 0.078 - 0.025;
-    cap.material = new THREE.MeshStandardMaterial({ color: '#6b7378', roughness: 0.6 });
+    cap.material = capMat ||= new THREE.MeshStandardMaterial({ color: '#6b7378', roughness: 0.6, name: 'M_Lamp_Cap' });
     this.group.add(cap);
     parent.add(this.group);
     this.state = null;
@@ -87,6 +89,7 @@ export class Equipment {
     const a = new Assembly();
     fn(a);
     const g = a.build(this.mats, opts);
+    g.name = 'Body';
     this.group.add(g);
     return g;
   }

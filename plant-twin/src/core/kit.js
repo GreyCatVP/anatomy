@@ -319,9 +319,9 @@ export class Assembly {
       merged.computeBoundingBox();
       const mesh = new THREE.Mesh(merged, mats.get(layer));
       mesh.userData.layer = layer;
-      mesh.castShadow = layer !== 'glass' && opts.castShadow !== false;
+      mesh.castShadow = layer !== 'glass' && layer !== 'cladding' && opts.castShadow !== false;
       mesh.receiveShadow = opts.receiveShadow !== false;
-      if (layer === 'glass') mesh.renderOrder = 2;
+      if (layer === 'glass' || layer === 'cladding') mesh.renderOrder = 2;
       group.add(mesh);
       meshes.push(mesh);
     }

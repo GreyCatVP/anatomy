@@ -16,6 +16,10 @@ npm run build      # dist/index.html и dist/artifact.html
 npm run dev        # локальный сервер на http://localhost:8080 для работы с src/
 ```
 
+## Экспорт в Unreal Engine, Blender и другие 3D-программы
+
+Готовая сцена `export/epk-plant.glb` (glTF 2.0) и реестр оборудования `export/equipment.csv` для прогулки по цеху от первого лица в Unreal Engine 5. Пошаговая инструкция: `export/README.md`.
+
 ## Что умеет
 
 - Вращение, сдвиг, масштаб к курсору, перелёт к станку двойным кликом или из реестра.
@@ -45,4 +49,7 @@ src/plant/     реестр и расстановка, инженерные се
 src/sim/       модель процесса, телеметрия, расчёт мощности
 src/view/      рендер, камера, пикинг, подписи, режимы
 src/ui/        интерфейс
+src/export/    экспорт сцены в glTF для Unreal Engine
+tools/         скрипт экспорта
+export/        готовая сцена .glb и реестр оборудования
 ```
