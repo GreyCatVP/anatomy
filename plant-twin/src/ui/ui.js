@@ -157,6 +157,9 @@ export class UI {
     const zones = ZONES.map((z) => `<option value="${z.code}">${z.code} · ${esc(z.name)}</option>`).join('');
     tb.innerHTML = `
       <div class="group tree-toggle"><button type="button" id="treeBtn">Оборудование</button></div>
+      <div class="group desk-only" role="group" aria-label="Панели"><span>Панели</span>
+        <button type="button" class="panelbtn" data-panel="left" aria-pressed="true">Реестр</button><button type="button" class="panelbtn" data-panel="right" aria-pressed="true">Инспектор</button>
+      </div>
       <div class="group" role="group" aria-label="Вид"><span>Вид</span>
         <button type="button" data-view="overview">Обзор</button><button type="button" data-view="plan">План</button><button type="button" data-view="iso">Изометрия</button><button type="button" id="walkBtn" class="walk-btn">Прогулка</button>
         <select id="zoneSel" aria-label="Перейти к участку" style="border:0;background:none;font:500 12px var(--f-sans);color:var(--ink-2);padding:0 4px;max-width:170px"><option value="">Участок…</option>${zones}</select>
@@ -164,6 +167,12 @@ export class UI {
       <div class="group" role="group" aria-label="Режим отображения"><span>Режим</span>
         <button type="button" data-mode="model" aria-pressed="true">Модель</button><button type="button" data-mode="xray" aria-pressed="false">Рентген</button>
         <button type="button" data-mode="status" aria-pressed="false">Статус</button><button type="button" data-mode="load" aria-pressed="false">Загрузка</button>
+      </div>
+      <div class="group" role="group" aria-label="Картинка"><span>Картинка</span>
+        <button type="button" data-style="light" aria-pressed="true">Схема</button><button type="button" data-style="real" aria-pressed="false">Реалистично</button>
+        <select id="qualitySel" aria-label="Качество изображения" style="border:0;background:none;font:500 12px var(--f-sans);color:var(--ink-2);padding:0 4px">
+          <option value="standard">Качество: стандарт</option><option value="high">Качество: высокое</option><option value="max">Качество: максимум</option>
+        </select>
       </div>
       <div class="group layers" role="group" aria-label="Слои"><span>Слои</span>
         <button type="button" data-layer="walls" aria-pressed="true">Стены</button><button type="button" data-layer="roof" aria-pressed="false">Кровля</button>
@@ -182,12 +191,22 @@ export class UI {
         if (b.dataset.mode === 'load') this.v.applyMode(this.loadTints());
         this.renderLegend();
       }
+      if (b.dataset.style) this.setStyle(b.dataset.style);
+      if (b.dataset.panel) this.togglePanel(b.dataset.panel);
       if (b.dataset.layer) {
         const on = b.getAttribute('aria-pressed') !== 'true';
         b.setAttribute('aria-pressed', String(on));
         this.v.setLayer(b.dataset.layer, on);
       }
     });
+    const q = $('#qualitySel');
+    q.value = this.v.quality;
+    q.addEventListener('change', () => { this.v.setQuality(q.value); store('epk.quality', q.value); });
+    const savedQ = load('epk.quality');
+    if (savedQ && savedQ !== this.v.quality) { q.value = savedQ; this.v.setQuality(savedQ); }
+    for (const side of ['left', 'right']) if (load(`epk.hide.${side}`) === '1') this.togglePanel(side);
+    const savedS = load('epk.style');
+    if (savedS === 'real') this.setStyle('real');
     $('#zoneSel').addEventListener('change', (ev) => {
       const z = ZONES.find((q) => q.code === ev.target.value);
       ev.target.value = '';
@@ -196,6 +215,21 @@ export class UI {
       this.v.frameBox(box, 1.05, new THREE.Vector3(-0.45, 0.85, 0.75));
     });
     this.renderLegend();
+  }
+
+  // collapse the register (left) or the inspector (right) to give the 3D view more room
+  togglePanel(side) {
+    const body = $('#body');
+    const hidden = body.classList.toggle(`hide-${side}`);
+    const b = document.querySelector(`[data-panel="${side}"]`);
+    if (b) b.setAttribute('aria-pressed', String(!hidden));
+    store(`epk.hide.${side}`, hidden ? '1' : '0');
+  }
+
+  setStyle(name) {
+    this.v.look.setStyle(name);
+    for (const x of document.querySelectorAll('[data-style]')) x.setAttribute('aria-pressed', String(x.dataset.style === name));
+    store('epk.style', name);
   }
 
   renderLegend() {
@@ -553,6 +587,9 @@ export class UI {
     }
   }
 }
+
+function store(k, v) { try { localStorage.setItem(k, v); } catch { /* storage is optional */ } }
+function load(k) { try { return localStorage.getItem(k); } catch { return null; } }
 
 function pill(s) {
   return `<span class="pill"><i class="dot" style="background:${STATUS_COLORS[s] || STATUS_COLORS.off}"></i>${esc(STATUS_TEXT[s] || s)}</span>`;

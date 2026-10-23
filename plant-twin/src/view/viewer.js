@@ -9,7 +9,7 @@ import { OutlinePass } from 'three/addons/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
-import { STATUS_COLORS } from '../core/look.js';
+import { STATUS_COLORS, addGrain } from '../core/look.js';
 
 const ACCENT = '#2456c9';
 
@@ -97,6 +97,8 @@ export class Viewer {
     outline.hiddenEdgeColor.set('#7d98d8');
     comp.addPass(outline);
     comp.addPass(new OutputPass());
+    this.mobile = mobile;
+    look.onStyle((p) => this.applyStyle(p));
 
     // labels
     const lr = (this.labels = new CSS2DRenderer());
@@ -137,6 +139,8 @@ export class Viewer {
     this.composer.setSize(w, h);
     this.labels.setSize(w, h);
     this.dirty = true;
+    // resizing clears the canvas; draw at once so the view never flashes empty
+    if (this.plant) this.render();
   }
 
   setPlant(plant, hall) {
@@ -311,6 +315,39 @@ export class Viewer {
     const svcGhost = this.mode === 'xray' || (this.isolate && this.selected);
     plant.peopleMats.set({ ghost: svcGhost });
     this.dirty = true;
+  }
+
+  // scene colours that live outside the material sets
+  applyStyle(p) {
+    this.scene.background.set(p.bg);
+    this.scene.fog.color.set(p.bg);
+    this.hemi.color.set(p.hemiSky);
+    this.hemi.groundColor.set(p.hemiGround);
+    this.hemi.intensity = p.hemi;
+    this.sun.intensity = p.sun;
+    if (this.hall) for (const ch of this.hall.root.children) {
+      if (ch.name === 'slab' && ch.material) { ch.material.color.set(p.floor); if (!ch.userData.grain) { addGrain(ch.material, 0.35, 1.6); ch.material.needsUpdate = true; ch.userData.grain = true; } }
+      if (ch.name === 'ground' && ch.material) ch.material.color.set(p.ground);
+      if (ch.name === 'joints' && ch.material) ch.material.color.set(p.floorLine);
+    }
+    this.dirty = true;
+  }
+
+  // Standard: light GPU load; High: current default; Max: softer shadows, denser ambient occlusion
+  setQuality(q) {
+    this.quality = q;
+    const dpr = window.devicePixelRatio || 1;
+    this.renderer.setPixelRatio(q === 'standard' ? Math.min(dpr, 1) : Math.min(dpr, 2));
+    this.composer.setPixelRatio(this.renderer.getPixelRatio());
+    const size = q === 'standard' ? 2048 : 4096;
+    const S = this.sun.shadow;
+    if (S.mapSize.x !== size) { S.mapSize.set(size, size); if (S.map) { S.map.dispose(); S.map = null; } }
+    S.radius = q === 'max' ? 3.5 : 2.5;
+    this.gtao.enabled = q !== 'standard';
+    const n = q === 'max' ? 24 : 12;
+    this.gtao.updateGtaoMaterial({ samples: n });
+    this.gtao.updatePdMaterial({ samples: q === 'max' ? 24 : 16 });
+    this.resize();
   }
 
   setLayer(name, on) {

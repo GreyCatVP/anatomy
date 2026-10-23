@@ -10,7 +10,47 @@ export const PALETTES = {
     hemiSky: '#ffffff', hemiGround: '#bdbab0', hemi: 1.15, sun: 2.1, env: 0.35, exposure: 1.0, fog: 0.0009,
     figure: '#9aa2a7',
   },
+  // factory colours: RAL 7035 housings, graphite drives and frames, stainless, concrete floor
+  real: {
+    bg: '#d8dde1', ground: '#9b9f9b', floor: '#aeb0aa', floorLine: '#93968f', paint: '#7d868c', paintText: '#5b646a', paintLayer: '#d9a92b',
+    body: '#c6cac7', dark: '#5a636b', steel: '#bcc2c6', rubber: '#23272b', glass: '#a7c4d2', product: '#c48a2c',
+    struct: '#8f9aa3', clad: '#c5d2d9', edge: '#1f2428', edgeOpacity: 0.13, cladOpacity: 0.2,
+    hemiSky: '#ffffff', hemiGround: '#a39f95', hemi: 0.85, sun: 2.6, env: 1.0, exposure: 1.0, fog: 0.0009,
+    figure: '#9aa2a7', grain: 1,
+    pbr: { body: [0.05, 0.55], dark: [0.35, 0.5], steel: [0.9, 0.28], rubber: [0.0, 0.92], product: [0.0, 0.65], struct: [0.3, 0.55] },
+  },
 };
+
+// Procedural surface grain in world space (the merged geometry has no UVs):
+// paint orange peel, concrete speckle and roughness variation, switched by uGrain.
+export const GRAIN = { value: 0 };
+export function addGrain(mat, amount = 0.18, scale = 3.5) {
+  mat.onBeforeCompile = (sh) => {
+    sh.uniforms.uGrain = GRAIN;
+    sh.uniforms.uGrainAmt = { value: amount };
+    sh.uniforms.uGrainScale = { value: scale };
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vGrainPos;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvGrainPos = (modelMatrix * vec4(position, 1.0)).xyz;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', `#include <common>
+varying vec3 vGrainPos;
+uniform float uGrain; uniform float uGrainAmt; uniform float uGrainScale;
+float gHash(vec3 p) { p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+float gNoise(vec3 x) {
+  vec3 i = floor(x), f = fract(x); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(gHash(i), gHash(i + vec3(1,0,0)), f.x), mix(gHash(i + vec3(0,1,0)), gHash(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(gHash(i + vec3(0,0,1)), gHash(i + vec3(1,0,1)), f.x), mix(gHash(i + vec3(0,1,1)), gHash(i + vec3(1,1,1)), f.x), f.y), f.z);
+}`)
+      .replace('#include <color_fragment>', `#include <color_fragment>
+float gN = 0.6 * gNoise(vGrainPos * uGrainScale) + 0.4 * gNoise(vGrainPos * uGrainScale * 9.0);
+diffuseColor.rgb *= 1.0 + uGrain * uGrainAmt * (gN - 0.5);`)
+      .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+roughnessFactor = clamp(roughnessFactor + uGrain * uGrainAmt * 0.8 * (gN - 0.5), 0.04, 1.0);`);
+  };
+  mat.customProgramCacheKey = () => 'grain';
+  return mat;
+}
 
 export const STATUS_COLORS = {
   run: '#2f9e64', idle: '#d19a1f', wait: '#d19a1f', starved: '#d19a1f', blocked: '#d97a26',
@@ -24,6 +64,20 @@ export class Look {
     this.sets = new Set();
     this.name = 'light';
     this.p = PALETTES.light;
+    this.listeners = [];
+  }
+
+  setStyle(name) {
+    if (!PALETTES[name] || name === this.name) return;
+    this.name = name;
+    this.p = PALETTES[name];
+    GRAIN.value = this.p.grain || 0;
+    for (const s of this.sets) s.refresh();
+    for (const fn of this.listeners) fn(this.p, name);
+  }
+
+  onStyle(fn) {
+    this.listeners.push(fn);
   }
 
   createSet(kind = 'eq') {
@@ -50,7 +104,11 @@ export class MatSet {
       glass: new THREE.MeshStandardMaterial({ roughness: 0.08, metalness: 0.1, transparent: true, depthWrite: false, side: THREE.DoubleSide }),
       edge: new THREE.LineBasicMaterial({ transparent: true, depthWrite: false }),
     };
-    for (const k in this.m) if (this.m[k].isMeshStandardMaterial) this.m[k].envMapIntensity = 0.45;
+    this.base = {};
+    for (const k in this.m) if (this.m[k].isMeshStandardMaterial) {
+      this.base[k] = [this.m[k].metalness, this.m[k].roughness];
+      if (k !== 'glass') addGrain(this.m[k], k === 'struct' ? 0.14 : 0.18);
+    }
     this.state = { mode: 'model', tint: null, k: 0, hover: false, ghost: false, selected: false, hidden: false };
     this._tmp = new THREE.Color();
     this.refresh();
@@ -86,7 +144,11 @@ export class MatSet {
     const tint = st.tint ? this._tmp.set(st.tint) : null;
     for (const L of SOLID) {
       const mat = this.m[L];
-      mat.color.set(p[L] ?? p.body);
+      mat.color.set(this.kind === 'paint' && L === 'dark' && p.paintLayer ? p.paintLayer : p[L] ?? p.body);
+      const [mt, ro] = (p.pbr && p.pbr[L]) || this.base[L];
+      mat.metalness = mt;
+      mat.roughness = ro;
+      mat.envMapIntensity = p.env === 1 ? 1.0 : 0.45;
       if (tint && L !== 'product') mat.color.lerp(tint, st.k * (L === 'body' || L === 'struct' ? 1 : 0.7));
       const transparent = ghost || xray;
       if (mat.transparent !== transparent) { mat.transparent = transparent; mat.needsUpdate = true; }
