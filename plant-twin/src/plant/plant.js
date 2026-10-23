@@ -74,10 +74,10 @@ export class Plant {
     this.people.name = 'people';
     this.root.add(this.people);
     this.walkers = WALKS.map((path, k) => {
-      const g = actors.person(this.peopleMats, 'stand', { step: 0.6 });
-      this.people.add(g);
+      const rig = actors.walker(this.peopleMats);
+      this.people.add(rig.group);
       const len = path.slice(1).reduce((s, p, i) => s + Math.hypot(p[0] - path[i][0], p[1] - path[i][1]), 0);
-      return { g, path, len, u: (k * 0.37) % 1, speed: 1.15 + (k % 3) * 0.15 };
+      return { g: rig.group, rig, path, len, u: (k * 0.37) % 1, speed: 1.15 + (k % 3) * 0.15, phase: k };
     });
     for (const [x, z, ry, pose, line] of STANDING) {
       let px = x, pz = z;
@@ -172,8 +172,11 @@ export class Plant {
       const d = w.u < 0.5 ? w.u * 2 * w.len : (1 - w.u) * 2 * w.len;
       const [x, z, hx, hz] = along(w.path, d);
       const back = w.u >= 0.5;
-      w.g.position.set(x, Math.abs(Math.sin(time * 6 + w.u * 40)) * 0.03, z);
+      w.g.position.set(x, 0, z);
       w.g.rotation.y = Math.atan2(back ? hz : -hz, back ? -hx : hx);
+      // a step is about 0.7 m, so one gait cycle covers 1.4 m
+      w.phase += (dt * w.speed * Math.PI) / 0.7;
+      actors.walkPose(w.rig, w.phase);
     }
   }
 

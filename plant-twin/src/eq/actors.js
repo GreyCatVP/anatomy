@@ -116,6 +116,57 @@ export function truck(mats) {
   return g;
 }
 
+// A walking person with hip, knee and shoulder joints; faces +X, feet at y = 0.
+// Drive it with walkPose(w, phase): one full cycle of `phase` (2π) is two steps.
+export function walker(mats) {
+  const L = 'dark';
+  const g = new THREE.Group();
+  const build = (fn, parent) => { const a = new Assembly(); fn(a); const m = a.build(mats); parent.add(m); return m; };
+  const body = new THREE.Group();
+  g.add(body);
+  build((a) => {
+    a.add(capsule(0.17, 0.42), 0, 1.13, 0, { layer: L });
+    a.box(0, 1.17, 0, 0.36, 0.05, 0.36, { layer: 'body', edges: false });
+    a.add(capsule(0.12, 0.1), 0, 0.86, 0, { layer: L });
+    a.sph(0, 1.6, 0, 0.11, { layer: L });
+    a.dome(0, 1.64, 0, 0.125, { layer: 'body' });
+    a.cyl(0.05, 1.645, 0, 0.14, 0.01, { layer: 'body', seg: 20 });
+  }, body);
+  const legs = [-1, 1].map((s) => {
+    const hip = new THREE.Group();
+    hip.position.set(0, 0.86, s * 0.1);
+    body.add(hip);
+    build((a) => a.add(capsule(0.075, 0.3), 0, -0.22, 0, { layer: L }), hip);
+    const knee = new THREE.Group();
+    knee.position.set(0, -0.44, 0);
+    hip.add(knee);
+    build((a) => {
+      a.add(capsule(0.065, 0.3), 0, -0.2, 0, { layer: L });
+      a.box(0.05, -0.41, 0, 0.24, 0.07, 0.1, { layer: L });
+    }, knee);
+    return { hip, knee };
+  });
+  const arms = [-1, 1].map((s) => {
+    const sh = new THREE.Group();
+    sh.position.set(0, 1.4, s * 0.24);
+    body.add(sh);
+    build((a) => a.add(capsule(0.05, 0.5), 0, -0.3, 0, { layer: L }), sh);
+    return sh;
+  });
+  return { group: g, body, legs, arms };
+}
+
+export function walkPose(w, phase) {
+  w.legs.forEach(({ hip, knee }, i) => {
+    const p = phase + i * Math.PI;
+    hip.rotation.z = 0.42 * Math.sin(p);
+    knee.rotation.z = -0.75 * Math.max(0, Math.cos(p));
+  });
+  w.arms.forEach((sh, i) => { sh.rotation.z = -0.35 * Math.sin(phase + i * Math.PI); });
+  // the body rises over the standing leg twice per cycle
+  w.body.position.y = 0.03 * Math.abs(Math.cos(phase)) - 0.03;
+}
+
 // A person as its own movable group.
 export function person(mats, pose = 'stand', o = {}) {
   const a = new Assembly();
