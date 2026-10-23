@@ -7,8 +7,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 const H = 1.8;      // body height, m
 const R = 0.3;      // capsule radius, m
 const EYE = 1.65;   // eye height above the feet, m
-const WALK = 1.6;   // m/s
-const RUN = 3.6;    // m/s
+const WALK = 4.0;   // m/s
+const RUN = 9.0;    // m/s
 const GRAVITY = -18;
 const JUMP = 4.2;
 
