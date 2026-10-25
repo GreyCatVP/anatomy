@@ -97,10 +97,11 @@ Each figure is light or dark. Light is the theme the skill designs for first, sh
 
 ## Install
 
-Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SKILL.md` at its root. This repository is that folder. Pick one way in:
+Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SKILL.md` at its root. This repository is that folder, and also a Claude Code plugin marketplace. Pick one way in:
 
 | | Command | Installs to |
 |---|---|---|
+| **Claude Code plugin**, for you | `/plugin marketplace add wheresryan22/anatomy`, then `/plugin install anatomy@anatomy` | `~/.claude/plugins/cache/anatomy/anatomy/<commit>` |
 | **skills CLI**, for you (Claude Code) | `npx skills add wheresryan22/anatomy -g -a claude-code` | `~/.claude/skills/anatomy` |
 | **skills CLI**, for you (Antigravity) | `npx skills add wheresryan22/anatomy -g -a antigravity` | `~/.gemini/antigravity/skills/anatomy` |
 | **skills CLI**, for you (OpenCode) | `npx skills add wheresryan22/anatomy -g -a opencode` | `~/.config/opencode/skills/anatomy` |
@@ -114,6 +115,24 @@ Anatomy is a standard [Agent Skill](https://agentskills.io): a folder with a `SK
 | **git**, for you (MiniMax Code) | `git clone https://github.com/wheresryan22/anatomy.git ~/.minimax/skills/anatomy` | `~/.minimax/skills/anatomy` |
 | **git**, for one project | `git clone https://github.com/wheresryan22/anatomy.git .claude/skills/anatomy` | `.claude/skills/anatomy` (Claude Code and OpenCode) or `.agents/skills/anatomy` (Antigravity, OpenCode, Codex and MiniMax Code) |
 | **Download**, no git | see below | any of the folders above |
+
+<details>
+<summary><b>As a Claude Code plugin</b></summary>
+
+<br>
+
+`.claude-plugin/marketplace.json` makes this repository a marketplace named `anatomy` with one plugin, also named `anatomy`, whose root is the repository itself. In a Claude Code session:
+
+```text
+/plugin marketplace add wheresryan22/anatomy
+/plugin install anatomy@anatomy
+```
+
+Or from your shell, with `claude plugin marketplace add wheresryan22/anatomy` and `claude plugin install anatomy@anatomy`. Plugin skills carry the plugin's name, so the command is `/anatomy:anatomy`; Claude still loads it on its own when you ask for a figure.
+
+`plugin.json` sets no `version`, so every commit on `main` counts as a new version. Claude Code leaves auto-update off for marketplaces outside Anthropic's, so turn it on under `/plugin` → **Marketplaces**, or run `claude plugin update anatomy@anatomy` when you want the latest. The plugin is the whole repository, examples included, like the skills CLI copy.
+
+</details>
 
 <details>
 <summary><b>With the skills CLI</b></summary>
@@ -263,6 +282,7 @@ The Raptor and the arcade cabinet also print. `node scripts/print.mjs examples/r
 ```text
 anatomy/
 ├── SKILL.md                  the skill: workflow, setup and craft rules
+├── .claude-plugin/           plugin.json and marketplace.json, for /plugin install
 ├── kit/                      the drawing library
 │   ├── iso-kit.ts            the core: camera, solids, parts, SVG renderer, card and page, CSS
 │   ├── iso-kit.mjs           the same core as plain ESM, for Node build scripts

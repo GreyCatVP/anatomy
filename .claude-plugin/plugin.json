@@ -1,0 +1,13 @@
+{
+  "name": "anatomy",
+  "displayName": "Anatomy",
+  "description": "Explain an idea as a crafted, interactive isometric machine: SVG figures with live readouts, optional WebGL shaders and 3D parts.",
+  "author": {
+    "name": "Ryan",
+    "url": "https://github.com/wheresryan22"
+  },
+  "homepage": "https://skills.wheresryan.sh/anatomy",
+  "repository": "https://github.com/wheresryan22/anatomy",
+  "license": "MIT",
+  "keywords": ["isometric", "svg", "illustration", "diagram", "webgl", "explainer"]
+}

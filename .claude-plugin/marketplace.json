@@ -1,0 +1,15 @@
+{
+  "name": "anatomy",
+  "description": "The Anatomy skill as a Claude Code plugin.",
+  "owner": {
+    "name": "Ryan",
+    "url": "https://github.com/wheresryan22"
+  },
+  "plugins": [
+    {
+      "name": "anatomy",
+      "source": "./",
+      "description": "Explain an idea as a crafted, interactive isometric machine."
+    }
+  ]
+}
