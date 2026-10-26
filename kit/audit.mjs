@@ -607,30 +607,36 @@ function measure(ra, rb, dx, dy, dz, cam, step, tolerance, least) {
 export function overlapsOf(items, P, { step = 0.25, tolerance = 0.3, least = 0.25, states = [0], skip = () => false } = {}) {
   const cam = cameraBasis(P);
   const live = items.map((item, index) => ({ item, index })).filter(({ item }) => item.shapes && item.shapes.length);
-  const homes = live.map(() => null);
+  const steps = live.map(({ item }) => {
+    let spacing = step;
+    for (const shape of item.shapes)
+      if (shape.kind === "tube") for (const r of shape.radii) if (r > 0) spacing = Math.min(spacing, r * cam.k / 1.5);
+    return spacing;
+  });
   let uid = 0;
-  const stamp = (raster) => Object.assign(raster, { uid: uid++ });
-  const home = (index) => homes[index] ?? (homes[index] = stamp(rasterOf(live[index].item, cam, step, [0, 0, 0])));
   const sliding = live.map(({ item }) => item.shapes.some((shape) => shape.slide));
-  const slid = new Map();
-  const rasterAt = (index, offset) => {
-    if (!sliding[index]) return home(index);
-    const id = `${index}|${offset.map((v) => v.toFixed(2)).join(",")}`;
-    if (!slid.has(id)) slid.set(id, stamp(rasterOf(live[index].item, cam, step, offset)));
-    return slid.get(id);
+  const rasters = new Map();
+  const rasterAt = (index, offset, spacing) => {
+    const at = sliding[index] ? offset : [0, 0, 0];
+    const id = `${index}|${spacing}|${at.map((v) => v.toFixed(2)).join(",")}`;
+    if (!rasters.has(id)) rasters.set(id, Object.assign(rasterOf(live[index].item, cam, spacing, at), { uid: uid++ }));
+    return rasters.get(id);
   };
-  const shiftOf = (offset) => ({ gx: Math.round((dot3(offset, cam.R) * cam.k) / step), gy: Math.round((dot3(offset, cam.D) * cam.k) / step), dz: dot3(offset, cam.V) });
+  const shiftOf = (offset, spacing) => ({ gx: Math.round((dot3(offset, cam.R) * cam.k) / spacing), gy: Math.round((dot3(offset, cam.D) * cam.k) / spacing), dz: dot3(offset, cam.V) });
   const memo = new Map();
   const pairs = [];
   for (const state of states) {
     const offsets = live.map(({ item }) => offsetOf(item, state));
-    const shifts = live.map((_, index) => (sliding[index] ? { gx: 0, gy: 0, dz: 0 } : shiftOf(offsets[index])));
+    const translations = offsets.map((offset, index) => sliding[index] ? [0, 0, 0] : offset);
+    const homes = live.map((_, index) => rasterAt(index, offsets[index], step));
+    const shifts = translations.map((offset) => shiftOf(offset, step));
     for (let a = 0; a < live.length; a++) {
-      const ra = rasterAt(a, offsets[a]);
-      const sa = shifts[a];
       for (let b = a + 1; b < live.length; b++) {
-        const rb = rasterAt(b, offsets[b]);
-        const sb = shifts[b];
+        const spacing = Math.min(steps[a], steps[b]);
+        const ra = spacing === step ? homes[a] : rasterAt(a, offsets[a], spacing);
+        const rb = spacing === step ? homes[b] : rasterAt(b, offsets[b], spacing);
+        const sa = spacing === step ? shifts[a] : shiftOf(translations[a], spacing);
+        const sb = spacing === step ? shifts[b] : shiftOf(translations[b], spacing);
         if (ra.x1 + sa.gx < rb.x0 + sb.gx || rb.x1 + sb.gx < ra.x0 + sa.gx || ra.y1 + sa.gy < rb.y0 + sb.gy || rb.y1 + sb.gy < ra.y0 + sa.gy) continue;
         if (skip(live[a].item, live[b].item)) continue;
         const dx = sb.gx - sa.gx;
@@ -639,11 +645,11 @@ export function overlapsOf(items, P, { step = 0.25, tolerance = 0.3, least = 0.2
         const id = `${ra.uid}|${rb.uid}|${dx},${dy},${dz.toFixed(3)}`;
         let hit = memo.get(id);
         if (hit === undefined) {
-          hit = measure(ra, rb, dx, dy, dz, cam, step, tolerance, least);
+          hit = measure(ra, rb, dx, dy, dz, cam, spacing, tolerance, least);
           memo.set(id, hit);
         }
         if (!hit) continue;
-        pairs.push({ state, a: live[a].index, b: live[b].index, front: hit.map((side) => ({ ...side, at: side.at && [side.at[0] + sa.gx * step, side.at[1] + sa.gy * step] })) });
+        pairs.push({ state, a: live[a].index, b: live[b].index, front: hit.map((side) => ({ ...side, at: side.at && [side.at[0] + sa.gx * spacing, side.at[1] + sa.gy * spacing] })) });
       }
     }
   }
