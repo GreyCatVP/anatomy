@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { IsoFigure } from "../../kit/react/draw";
-import { asksForStillness, useReadout } from "../../kit/react/live";
+import { asksForStillness, useReadout, useStillness } from "../../kit/react/live";
 import { keyOf, rowsOf, type GlassShape, type RowShape } from "./drops";
 import { fanOf, type FanPose } from "./fan";
 import { HEIGHT, MERGE, MERGE_LEAST, MERGE_MOST, MERGE_STEP, ROWS, WIDTH, mergeAtX, readoutOf, roundMerge, spokenOf } from "./rig";
@@ -99,6 +99,7 @@ interface Props {
 
 export function LiquidLive({ label, back, deck, front }: Props) {
   const { anchor, say } = useReadout<HTMLDivElement>();
+  const still = useStillness();
   const root = React.useRef<HTMLDivElement | null>(null);
   const blades = React.useRef<BladeNodes[]>(Array.from({ length: BLADES }, emptyBlade));
   const halo = React.useRef<SVGPathElement | null>(null);
@@ -168,6 +169,14 @@ export function LiquidLive({ label, back, deck, front }: Props) {
 
   React.useEffect(() => stop, [stop]);
 
+  React.useLayoutEffect(() => {
+    if (!still) return;
+    stop();
+    lead.current = goal.current;
+    shown.current = goal.current;
+    draw(goal.current);
+  }, [still, stop, draw]);
+
   React.useEffect(() => {
     say(readoutOf(value));
   }, [value, say]);
@@ -198,7 +207,7 @@ export function LiquidLive({ label, back, deck, front }: Props) {
   const touring = visible && idle && !engaged;
 
   React.useEffect(() => {
-    if (!touring || asksForStillness()) return;
+    if (!touring || still) return;
     let timer = 0;
     let step = 0;
     const next = () => {
@@ -209,7 +218,7 @@ export function LiquidLive({ label, back, deck, front }: Props) {
     };
     timer = window.setTimeout(next, TOUR_FIRST);
     return () => window.clearTimeout(timer);
-  }, [touring, aim]);
+  }, [touring, aim, still]);
 
   const mergeAt = (clientX: number) => {
     const svg = root.current?.querySelector("svg");

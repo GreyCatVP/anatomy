@@ -13,6 +13,7 @@ All notable changes to Anatomy are recorded here. The format follows [Keep a Cha
 ### Changed
 
 - A Figure no longer quotes a time to the user. The 30–90 minute estimate was often far longer than the build itself ([#41](https://github.com/wheresryan22/anatomy/issues/41)).
+- The Spot Plate and Dial Indicator examples settle active motion when `prefers-reduced-motion` changes to `reduce`, and apply later input without animation.
 
 ### Fixed
 
