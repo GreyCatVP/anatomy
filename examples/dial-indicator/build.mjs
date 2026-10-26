@@ -234,9 +234,41 @@ function tick(now) {
   frame = visible && !settled ? requestAnimationFrame(tick) : 0;
 }
 const run = () => { if (!frame && visible) { last = 0; frame = requestAnimationFrame(tick); } };
-const steer = (next) => { touring = false; target = clamp(next, REACH[0], REACH[1]); clearTimeout(idleTimer); idleTimer = setTimeout(() => { touring = !still.matches; clock = 0; run(); }, 3600); run(); };
+const settleMotion = () => {
+  clearTimeout(idleTimer);
+  touring = false;
+  clock = 0;
+  x = target;
+  tip.at = heightUnder(x);
+  tip.rate = 0;
+  cancelAnimationFrame(frame);
+  frame = 0;
+  last = 0;
+  draw();
+};
+still.addEventListener("change", () => {
+  if (still.matches) settleMotion();
+  else {
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { touring = true; clock = 0; run(); }, 3600);
+  }
+});
+const steer = (next) => {
+  touring = false;
+  target = clamp(next, REACH[0], REACH[1]);
+  clearTimeout(idleTimer);
+  if (still.matches) {
+    x = target;
+    tip.at = heightUnder(x);
+    tip.rate = 0;
+    draw();
+    return;
+  }
+  idleTimer = setTimeout(() => { touring = !still.matches; clock = 0; run(); }, 3600);
+  run();
+};
 new IntersectionObserver((entries) => { visible = entries[entries.length - 1].isIntersecting; if (visible) run(); }, { rootMargin: "120px 0px" }).observe(stage);
-if (still.matches) touring = false;
+if (still.matches) settleMotion();
 stage.addEventListener("pointermove", (event) => {
   const box = svg.getBoundingClientRect();
   const share = clamp(((event.clientX - box.left) / box.width - 0.25) / 0.5, 0, 1);
