@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aegis-IV Spacecraft · Teardown</title>
+  <style>
+    :root {
+      --bg: #06080f;
+      --fg: #e2e8f0;
+      --muted: #64748b;
+      --card-bg: rgba(15, 23, 42, 0.78);
+      --border: rgba(148, 163, 184, 0.16);
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.45);
+      --amber: #f59e0b;
+      --amber-glow: rgba(245, 158, 11, 0.45);
+      --plasma: #00f0ff;
+      --titanium: #94a3b8;
+      --carbon: #0f172a;
+      --solar: #6366f1;
+    }
+
+    [data-theme="light"] {
+      --bg: #f8fafc;
+      --fg: #0f172a;
+      --muted: #64748b;
+      --card-bg: rgba(255, 255, 255, 0.88);
+      --border: rgba(148, 163, 184, 0.28);
+      --accent: #0284c7;
+      --accent-glow: rgba(2, 132, 199, 0.28);
+      --amber: #d97706;
+      --amber-glow: rgba(217, 119, 6, 0.28);
+      --plasma: #0284c7;
+      --titanium: #64748b;
+      --carbon: #1e293b;
+      --solar: #4f46e5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(circle at 50% 45%, rgba(56, 189, 248, 0.07) 0%, transparent 68%), var(--bg);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      user-select: none;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Ambient stars background effect */
+    .stars {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image: 
+        radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,0.4) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 85% 15%, rgba(255,255,255,0.5) 100%, transparent),
+        radial-gradient(1px 1px at 70% 75%, rgba(56,189,248,0.5) 100%, transparent),
+        radial-gradient(1.5px 1.5px at 25% 80%, rgba(255,255,255,0.3) 100%, transparent),
+        radial-gradient(1px 1px at 40% 30%, rgba(255,255,255,0.4) 100%, transparent);
+      opacity: 0.8;
+      z-index: 0;
+    }
+
+    /* Top minimalist toolbar */
+    header {
+      position: fixed;
+      top: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 8px 20px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 9999px;
+      z-index: 50;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25);
+    }
+
+    .title {
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+
+    .divider {
+      width: 1px;
+      height: 16px;
+      background: var(--border);
+    }
+
+    .slider-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .slider-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 90px;
+      height: 4px;
+      border-radius: 9999px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--accent-glow);
+      transition: transform 0.15s ease;
+    }
+
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .btn {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      color: var(--fg);
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .btn.active {
+      color: var(--accent);
+      background: var(--accent-glow);
+    }
+
+    /* Scene Viewport */
+    .viewport {
+      position: relative;
+      width: 980px;
+      max-width: 95vw;
+      height: 720px;
+      max-height: 88vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 1400px;
+      z-index: 10;
+    }
+
+    /* Spaceship 3D Float Stage */
+    .ship-stage {
+      position: relative;
+      width: 600px;
+      height: 720px;
+      transform-style: preserve-3d;
+      animation: space-float 6s ease-in-out infinite alternate;
+    }
+
+    .ship-stage.paused {
+      animation-play-state: paused;
+    }
+
+    @keyframes space-float {
+      0% {
+        transform: translateY(-10px) rotateX(12deg) rotateY(-4deg);
+      }
+      100% {
+        transform: translateY(10px) rotateX(16deg) rotateY(4deg);
+      }
+    }
+
+    /* Modules & Explosions */
+    .module {
+      transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), filter 0.25s ease;
+      cursor: pointer;
+    }
+
+    .module:hover,
+    .module.highlighted {
+      filter: brightness(1.25) drop-shadow(0 0 14px var(--accent));
+    }
+
+    /* Dynamic Module Exploded Transforms (controlled via CSS vars) */
+    .mod-nose {
+      transform: translateY(calc(var(--exp, 0) * -110px)) translateZ(calc(var(--exp, 0) * 50px));
+    }
+
+    .mod-capsule {
+      transform: translateY(calc(var(--exp, 0) * -60px)) translateZ(calc(var(--exp, 0) * 25px));
+    }
+
+    .mod-solar-left {
+      transform: translateX(calc(var(--exp, 0) * -125px)) rotateZ(calc(var(--exp, 0) * -8deg));
+    }
+
+    .mod-solar-right {
+      transform: translateX(calc(var(--exp, 0) * 125px)) rotateZ(calc(var(--exp, 0) * 8deg));
+    }
+
+    .mod-shield-left {
+      transform: translateX(calc(var(--exp, 0) * -85px)) translateY(calc(var(--exp, 0) * 15px)) rotateY(calc(var(--exp, 0) * -20deg));
+    }
+
+    .mod-shield-right {
+      transform: translateX(calc(var(--exp, 0) * 85px)) translateY(calc(var(--exp, 0) * 15px)) rotateY(calc(var(--exp, 0) * 20deg));
+    }
+
+    .mod-rcs {
+      transform: scale(calc(1 + var(--exp, 0) * 0.15));
+    }
+
+    .mod-reactor {
+      transform: translateY(calc(var(--exp, 0) * 45px)) scale(calc(1 + var(--exp, 0) * 0.05));
+    }
+
+    .mod-engine {
+      transform: translateY(calc(var(--exp, 0) * 110px)) translateZ(calc(var(--exp, 0) * -30px));
+    }
+
+    /* Callout Labels Layer */
+    .labels-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+      transition: opacity 0.3s ease;
+    }
+
+    .labels-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .callout {
+      position: absolute;
+      display: flex;
+      flex-direction: column;
+      pointer-events: auto;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .callout:hover {
+      transform: translateY(-2px);
+    }
+
+    .callout-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      transition: all 0.2s ease;
+    }
+
+    .callout:hover .callout-badge,
+    .callout.active .callout-badge {
+      border-color: var(--accent);
+      background: rgba(14, 165, 233, 0.14);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    .callout-num {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #020617;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .callout-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+
+    .callout-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+      max-width: 170px;
+      line-height: 1.3;
+    }
+
+    .leader-line {
+      position: absolute;
+      stroke: var(--accent);
+      stroke-width: 1.2;
+      stroke-dasharray: 3 3;
+      fill: none;
+      opacity: 0.6;
+      transition: opacity 0.2s ease, stroke-width 0.2s ease;
+    }
+
+    .callout:hover .leader-line,
+    .callout.active .leader-line {
+      opacity: 1;
+      stroke-width: 1.8;
+      stroke-dasharray: none;
+    }
+
+    .leader-dot {
+      fill: var(--accent);
+      filter: drop-shadow(0 0 6px var(--accent));
+    }
+  </style>
+</head>
+<body data-theme="dark">
+  <div class="stars"></div>
+
+  <!-- Minimal Header Controls -->
+  <header>
+    <div class="title">Aegis-IV Explorer</div>
+    <div class="divider"></div>
+
+    <div class="slider-wrap">
+      <span class="slider-label">Teardown</span>
+      <input type="range" id="explode-slider" min="0" max="1" step="0.01" value="0.75">
+    </div>
+
+    <button class="btn active" id="btn-explode">Explode: ON</button>
+    <button class="btn active" id="btn-float">Float: ON</button>
+    <button class="btn active" id="btn-labels">Labels: ON</button>
+    <div class="divider"></div>
+    <button class="btn" id="btn-theme">Theme: Dark</button>
+  </header>
+
+  <!-- Spaceship Viewport -->
+  <main class="viewport">
+    <div class="ship-stage" id="ship" style="--exp: 0.75;">
+      <svg viewBox="0 0 600 720" width="100%" height="100%" style="overflow:visible; filter: drop-shadow(0 25px 35px rgba(0,0,0,0.6));">
+        <defs>
+          <!-- Gradients -->
+          <linearGradient id="hullDark" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#090d16"/>
+            <stop offset="35%" stop-color="#1e293b"/>
+            <stop offset="50%" stop-color="#334155"/>
+            <stop offset="65%" stop-color="#1e293b"/>
+            <stop offset="100%" stop-color="#090d16"/>
+          </linearGradient>
+
+          <linearGradient id="titaniumGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#334155"/>
+            <stop offset="40%" stop-color="#94a3b8"/>
+            <stop offset="50%" stop-color="#cbd5e1"/>
+            <stop offset="60%" stop-color="#94a3b8"/>
+            <stop offset="100%" stop-color="#334155"/>
+          </linearGradient>
+
+          <linearGradient id="goldCanopy" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#fef08a"/>
+            <stop offset="40%" stop-color="#f59e0b"/>
+            <stop offset="100%" stop-color="#78350f"/>
+          </linearGradient>
+
+          <radialGradient id="plasmaCore" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="30%" stop-color="#38bdf8"/>
+            <stop offset="70%" stop-color="#0284c7"/>
+            <stop offset="100%" stop-color="#0c4a6e"/>
+          </radialGradient>
+
+          <radialGradient id="thrusterPlume" cx="50%" cy="20%" r="80%">
+            <stop offset="0%" stop-color="#ffffff"/>
+            <stop offset="25%" stop-color="#38bdf8"/>
+            <stop offset="60%" stop-color="#0284c7"/>
+            <stop offset="100%" stop-color="transparent"/>
+          </radialGradient>
+
+          <linearGradient id="solarCell" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#1e1b4b"/>
+            <stop offset="40%" stop-color="#312e81"/>
+            <stop offset="70%" stop-color="#1e1b4b"/>
+            <stop offset="100%" stop-color="#0f172a"/>
+          </linearGradient>
+
+          <filter id="coreGlow">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+
+        <!-- 1. SOLAR ARRAYS (Port & Starboard) -->
+        <!-- Port Solar Wing -->
+        <g class="module mod-solar-left" data-target="solar">
+          <!-- Boom Arm -->
+          <rect x="110" y="275" width="90" height="6" rx="2" fill="url(#titaniumGrad)"/>
+          <circle cx="110" cy="278" r="4.5" fill="#f59e0b"/>
+          <!-- Solar Panels (3 segmented folding cells) -->
+          <rect x="15" y="210" width="95" height="136" rx="3" fill="url(#solarCell)" stroke="#475569" stroke-width="1.5"/>
+          <!-- Solar grid lines -->
+          <g stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1">
+            <line x1="15" y1="244" x2="110" y2="244"/>
+            <line x1="15" y1="278" x2="110" y2="278"/>
+            <line x1="15" y1="312" x2="110" y2="312"/>
+            <line x1="46" y1="210" x2="46" y2="346"/>
+            <line x1="78" y1="210" x2="78" y2="346"/>
+          </g>
+        </g>
+
+        <!-- Starboard Solar Wing -->
+        <g class="module mod-solar-right" data-target="solar">
+          <rect x="400" y="275" width="90" height="6" rx="2" fill="url(#titaniumGrad)"/>
+          <circle cx="490" cy="278" r="4.5" fill="#f59e0b"/>
+          <rect x="490" y="210" width="95" height="136" rx="3" fill="url(#solarCell)" stroke="#475569" stroke-width="1.5"/>
+          <g stroke="#38bdf8" stroke-opacity="0.3" stroke-width="1">
+            <line x1="490" y1="244" x2="585" y2="244"/>
+            <line x1="490" y1="278" x2="585" y2="278"/>
+            <line x1="490" y1="312" x2="585" y2="312"/>
+            <line x1="522" y1="210" x2="522" y2="346"/>
+            <line x1="554" y1="210" x2="554" y2="346"/>
+          </g>
+        </g>
+
+        <!-- 2. CENTRAL STRUCTURAL TRUSS & CRYOGENIC TANKS -->
+        <g class="module mod-truss" data-target="tanks">
+          <!-- Titanium Spine & Isogrid Frame -->
+          <rect x="250" y="270" width="100" height="175" rx="6" fill="#090d16" stroke="#475569" stroke-width="2"/>
+          <!-- Lattice Truss Cross-members -->
+          <g stroke="#334155" stroke-width="1.5">
+            <line x1="250" y1="270" x2="350" y2="315"/>
+            <line x1="350" y1="270" x2="250" y2="315"/>
+            <line x1="250" y1="315" x2="350" y2="360"/>
+            <line x1="350" y1="315" x2="250" y2="360"/>
+            <line x1="250" y1="360" x2="350" y2="405"/>
+            <line x1="350" y1="360" x2="250" y2="405"/>
+            <line x1="250" y1="405" x2="350" y2="445"/>
+            <line x1="350" y1="405" x2="250" y2="445"/>
+          </g>
+          <!-- Upper LOX Oxidizer Tank (Cryogenic Spherical Dome) -->
+          <circle cx="300" cy="315" r="38" fill="url(#titaniumGrad)" stroke="#1e293b" stroke-width="1.5"/>
+          <ellipse cx="300" cy="305" rx="34" ry="12" fill="none" stroke="#64748b" stroke-width="1.2" stroke-dasharray="3 3"/>
+
+          <!-- Lower Liquid Methane Fuel Tank -->
+          <rect x="264" y="360" width="72" height="75" rx="14" fill="url(#titaniumGrad)" stroke="#1e293b" stroke-width="1.5"/>
+          <line x1="264" y1="395" x2="336" y2="395" stroke="#334155" stroke-width="2"/>
+
+          <!-- Cryogenic Feed Lines & Manifolds -->
+          <path d="M 285 350 L 285 450 L 295 470" fill="none" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 315 350 L 315 450 L 305 470" fill="none" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+        </g>
+
+        <!-- 3. THERMAL PROTECTION HEAT SHIELD SHELLS (Separate Port / Starboard) -->
+        <!-- Port Shell -->
+        <g class="module mod-shield-left" data-target="shield">
+          <path d="M 240 265 L 205 295 L 200 420 L 240 445 Z" fill="url(#hullDark)" stroke="#475569" stroke-width="1.5"/>
+          <!-- Hexagonal heat tiles pattern -->
+          <g stroke="#334155" stroke-width="1" fill="none">
+            <line x1="205" y1="320" x2="240" y2="320"/>
+            <line x1="202" y1="350" x2="240" y2="350"/>
+            <line x1="201" y1="380" x2="240" y2="380"/>
+            <line x1="200" y1="410" x2="240" y2="410"/>
+          </g>
+          <circle cx="218" cy="305" r="2" fill="#38bdf8"/>
+        </g>
+
+        <!-- Starboard Shell -->
+        <g class="module mod-shield-right" data-target="shield">
+          <path d="M 360 265 L 395 295 L 400 420 L 360 445 Z" fill="url(#hullDark)" stroke="#475569" stroke-width="1.5"/>
+          <g stroke="#334155" stroke-width="1" fill="none">
+            <line x1="395" y1="320" x2="360" y2="320"/>
+            <line x1="398" y1="350" x2="360" y2="350"/>
+            <line x1="399" y1="380" x2="360" y2="380"/>
+            <line x1="400" y1="410" x2="360" y2="410"/>
+          </g>
+          <circle cx="382" cy="305" r="2" fill="#38bdf8"/>
+        </g>
+
+        <!-- 4. RCS ATTITUDE THRUSTERS (Quads on Left & Right) -->
+        <g class="module mod-rcs" data-target="rcs">
+          <!-- Port RCS Block -->
+          <rect x="232" y="240" width="10" height="16" rx="2" fill="url(#titaniumGrad)"/>
+          <polygon points="232,242 224,238 224,246" fill="#f59e0b"/>
+          <polygon points="232,254 224,250 224,258" fill="#f59e0b"/>
+          <polygon points="234,240 230,232 238,232" fill="#f59e0b"/>
+          <!-- Starboard RCS Block -->
+          <rect x="358" y="240" width="10" height="16" rx="2" fill="url(#titaniumGrad)"/>
+          <polygon points="368,242 376,238 376,246" fill="#f59e0b"/>
+          <polygon points="368,254 376,250 376,258" fill="#f59e0b"/>
+          <polygon points="366,240 362,232 370,232" fill="#f59e0b"/>
+        </g>
+
+        <!-- 5. COMMAND MODULE & PRESSURIZED CREW CABIN -->
+        <g class="module mod-capsule" data-target="cabin">
+          <!-- Cabin Outer Hull -->
+          <path d="M 260 200 L 245 260 L 355 260 L 340 200 Z" fill="url(#hullDark)" stroke="#475569" stroke-width="2"/>
+          <!-- Viewport Cockpit Glass (Gold Reflective) -->
+          <polygon points="280,210 270,238 300,242" fill="url(#goldCanopy)" stroke="#fef08a" stroke-width="1.2"/>
+          <polygon points="320,210 330,238 300,242" fill="url(#goldCanopy)" stroke="#fef08a" stroke-width="1.2"/>
+          <!-- Docking Hatch Collar -->
+          <circle cx="300" cy="202" r="8" fill="url(#titaniumGrad)" stroke="#1e293b" stroke-width="1.5"/>
+          <circle cx="300" cy="202" r="4.5" fill="#0f172a"/>
+        </g>
+
+        <!-- 6. FORWARD AVIONICS & SENSOR NOSECONE -->
+        <g class="module mod-nose" data-target="nose">
+          <!-- Angular Fairing Dome -->
+          <polygon points="300,85 265,190 335,190" fill="url(#hullDark)" stroke="#475569" stroke-width="2"/>
+          <!-- High-gain phased array sensor band -->
+          <ellipse cx="300" cy="180" rx="28" ry="6" fill="none" stroke="#38bdf8" stroke-width="2"/>
+          <!-- Optical Star Tracker Lenses -->
+          <circle cx="292" cy="145" r="4" fill="#00f0ff" stroke="#ffffff" stroke-width="1" filter="url(#coreGlow)"/>
+          <circle cx="308" cy="145" r="4" fill="#00f0ff" stroke="#ffffff" stroke-width="1" filter="url(#coreGlow)"/>
+          <circle cx="300" cy="115" r="3" fill="#f59e0b"/>
+          <!-- Nose Pitot & Comms Probe -->
+          <line x1="300" y1="85" x2="300" y2="55" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="300" cy="55" r="3" fill="#38bdf8"/>
+        </g>
+
+        <!-- 7. PLASMA REACTOR / FUSION INJECTOR CORE -->
+        <g class="module mod-reactor" data-target="reactor">
+          <!-- Magnetic Confinement Toroid Frame -->
+          <rect x="255" y="455" width="90" height="42" rx="10" fill="url(#titaniumGrad)" stroke="#1e293b" stroke-width="2"/>
+          <!-- Glowing Plasma Fusion Chamber -->
+          <ellipse cx="300" cy="476" rx="30" ry="14" fill="url(#plasmaCore)" filter="url(#coreGlow)"/>
+          <!-- Magnetic Field Choke Rings -->
+          <ellipse cx="282" cy="476" rx="6" ry="12" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <ellipse cx="300" cy="476" rx="6" ry="12" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <ellipse cx="318" cy="476" rx="6" ry="12" fill="none" stroke="#ffffff" stroke-width="1.8"/>
+          <!-- Turbopump Preburner Pipes -->
+          <path d="M 268 476 L 255 490 L 255 520 L 280 540" fill="none" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 332 476 L 345 490 L 345 520 L 320 540" fill="none" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+        </g>
+
+        <!-- 8. THRUST VECTOR GIMBAL & AEROSPIKE ENGINE BELL -->
+        <g class="module mod-engine" data-target="engine">
+          <!-- Dual-axis Hydraulic Gimbal Assembly -->
+          <rect x="282" y="504" width="36" height="18" rx="4" fill="url(#titaniumGrad)" stroke="#1e293b" stroke-width="1.5"/>
+          <!-- Actuator Pistons -->
+          <line x1="275" y1="504" x2="285" y2="528" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+          <line x1="325" y1="504" x2="315" y2="528" stroke="#f59e0b" stroke-width="3" stroke-linecap="round"/>
+
+          <!-- Regenerative Aerospike / Expansion Nozzle -->
+          <path d="M 285 524 L 260 595 L 340 595 L 315 524 Z" fill="url(#hullDark)" stroke="#475569" stroke-width="2"/>
+          <!-- Exterior Cooling Coil Rings -->
+          <g stroke="#94a3b8" stroke-width="1.4" fill="none">
+            <line x1="281" y1="540" x2="319" y2="540"/>
+            <line x1="275" y1="558" x2="325" y2="558"/>
+            <line x1="268" y1="576" x2="332" y2="576"/>
+          </g>
+
+          <!-- Hot Thrust Chamber Glow & Exhaust Plume -->
+          <ellipse cx="300" cy="595" rx="36" ry="8" fill="#38bdf8" filter="url(#coreGlow)"/>
+          <polygon points="264,595 300,680 336,595" fill="url(#thrusterPlume)" opacity="0.85"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- CLEAN CALLOUT LABELS OVERLAY -->
+    <div class="labels-overlay" id="labels-layer">
+      <!-- SVG Leader Lines Connecting Labels to Exact Modules -->
+      <svg width="100%" height="100%" style="position:absolute;inset:0;overflow:visible;pointer-events:none;">
+        <!-- 1. Nosecone -->
+        <g class="leader" data-for="nose">
+          <polyline class="leader-line" points="260,110 380,110 440,140"/>
+          <circle class="leader-dot" cx="440" cy="140" r="3.5"/>
+        </g>
+        <!-- 2. Command Cabin -->
+        <g class="leader" data-for="cabin">
+          <polyline class="leader-line" points="220,195 340,195 440,225"/>
+          <circle class="leader-dot" cx="440" cy="225" r="3.5"/>
+        </g>
+        <!-- 3. Solar Wings -->
+        <g class="leader" data-for="solar">
+          <polyline class="leader-line" points="190,290 280,290 320,310"/>
+          <circle class="leader-dot" cx="320" cy="310" r="3.5"/>
+        </g>
+        <!-- 4. Heat Shield -->
+        <g class="leader" data-for="shield">
+          <polyline class="leader-line" points="210,430 330,430 395,410"/>
+          <circle class="leader-dot" cx="395" cy="410" r="3.5"/>
+        </g>
+        <!-- 5. RCS Quads -->
+        <g class="leader" data-for="rcs">
+          <polyline class="leader-line" points="740,170 610,170 545,248"/>
+          <circle class="leader-dot" cx="545" cy="248" r="3.5"/>
+        </g>
+        <!-- 6. Cryogenic Tanks -->
+        <g class="leader" data-for="tanks">
+          <polyline class="leader-line" points="760,285 620,285 530,335"/>
+          <circle class="leader-dot" cx="530" cy="335" r="3.5"/>
+        </g>
+        <!-- 7. Plasma Reactor -->
+        <g class="leader" data-for="reactor">
+          <polyline class="leader-line" points="740,435 600,435 520,490"/>
+          <circle class="leader-dot" cx="520" cy="490" r="3.5"/>
+        </g>
+        <!-- 8. Engine Bell -->
+        <g class="leader" data-for="engine">
+          <polyline class="leader-line" points="720,560 590,560 515,615"/>
+          <circle class="leader-dot" cx="515" cy="615" r="3.5"/>
+        </g>
+      </svg>
+
+      <!-- Label Badges (Left Side) -->
+      <div class="callout" style="top: 85px; left: 110px;" data-target="nose">
+        <div class="callout-badge">
+          <span class="callout-num">1</span>
+          <div>
+            <div class="callout-title">Avionics & Lidar</div>
+            <div class="callout-sub">Phased array radar & optical star trackers</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 170px; left: 70px;" data-target="cabin">
+        <div class="callout-badge">
+          <span class="callout-num">2</span>
+          <div>
+            <div class="callout-title">Command Capsule</div>
+            <div class="callout-sub">Pressurized crew cabin with gold canopy</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 265px; left: 40px;" data-target="solar">
+        <div class="callout-badge">
+          <span class="callout-num">3</span>
+          <div>
+            <div class="callout-title">Solar Arrays</div>
+            <div class="callout-sub">Folding high-efficiency triple-junction cells</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 405px; left: 60px;" data-target="shield">
+        <div class="callout-badge">
+          <span class="callout-num">4</span>
+          <div>
+            <div class="callout-title">Thermal Shield</div>
+            <div class="callout-sub">Carbon-composite ceramic reentry tiles</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Label Badges (Right Side) -->
+      <div class="callout" style="top: 145px; right: 80px;" data-target="rcs">
+        <div class="callout-badge">
+          <span class="callout-num">5</span>
+          <div>
+            <div class="callout-title">RCS Thrusters</div>
+            <div class="callout-sub">Cold-gas quads for multi-axis attitude control</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 260px; right: 60px;" data-target="tanks">
+        <div class="callout-badge">
+          <span class="callout-num">6</span>
+          <div>
+            <div class="callout-title">Propellant Core</div>
+            <div class="callout-sub">LOX & Methane tanks in isogrid truss</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 410px; right: 80px;" data-target="reactor">
+        <div class="callout-badge">
+          <span class="callout-num">7</span>
+          <div>
+            <div class="callout-title">Plasma Reactor</div>
+            <div class="callout-sub">Magnetic toroid fusion confinement core</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout" style="top: 535px; right: 90px;" data-target="engine">
+        <div class="callout-badge">
+          <span class="callout-num">8</span>
+          <div>
+            <div class="callout-title">Vector Engine</div>
+            <div class="callout-sub">Hydraulic gimbal with aerospike nozzle</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const body = document.body;
+    const ship = document.getElementById("ship");
+    const slider = document.getElementById("explode-slider");
+    const btnExplode = document.getElementById("btn-explode");
+    const btnFloat = document.getElementById("btn-float");
+    const btnLabels = document.getElementById("btn-labels");
+    const btnTheme = document.getElementById("btn-theme");
+    const labelsLayer = document.getElementById("labels-layer");
+
+    // Slider controls explode progression
+    slider.addEventListener("input", (e) => {
+      const val = parseFloat(e.target.value);
+      ship.style.setProperty("--exp", val);
+      if (val > 0.05) {
+        btnExplode.classList.add("active");
+        btnExplode.textContent = "Explode: ON";
+      } else {
+        btnExplode.classList.remove("active");
+        btnExplode.textContent = "Explode: OFF";
+      }
+    });
+
+    // Explode Toggle Button (Assembled vs Teardown)
+    let isExploded = true;
+    btnExplode.addEventListener("click", () => {
+      isExploded = !isExploded;
+      const targetVal = isExploded ? 0.75 : 0;
+      slider.value = targetVal;
+      ship.style.setProperty("--exp", targetVal);
+      btnExplode.classList.toggle("active", isExploded);
+      btnExplode.textContent = isExploded ? "Explode: ON" : "Explode: OFF";
+    });
+
+    // Space Floating Animation Toggle
+    let isFloating = true;
+    btnFloat.addEventListener("click", () => {
+      isFloating = !isFloating;
+      ship.classList.toggle("paused", !isFloating);
+      btnFloat.classList.toggle("active", isFloating);
+      btnFloat.textContent = isFloating ? "Float: ON" : "Float: PAUSED";
+    });
+
+    // Labels Visibility Toggle
+    let showLabels = true;
+    btnLabels.addEventListener("click", () => {
+      showLabels = !showLabels;
+      labelsLayer.classList.toggle("hidden", !showLabels);
+      btnLabels.classList.toggle("active", showLabels);
+      btnLabels.textContent = showLabels ? "Labels: ON" : "Labels: OFF";
+    });
+
+    // Theme Toggle (Dark vs Light)
+    btnTheme.addEventListener("click", () => {
+      const current = body.getAttribute("data-theme");
+      const next = current === "dark" ? "light" : "dark";
+      body.setAttribute("data-theme", next);
+      btnTheme.textContent = "Theme: " + (next === "dark" ? "Dark" : "Light");
+    });
+
+    // Hover Connection between Callouts & Modules
+    const callouts = document.querySelectorAll(".callout");
+    const modules = document.querySelectorAll(".module");
+    const leaders = document.querySelectorAll(".leader");
+
+    callouts.forEach(callout => {
+      const target = callout.getAttribute("data-target");
+      const leader = document.querySelector(`.leader[data-for="${target}"]`);
+
+      callout.addEventListener("mouseenter", () => {
+        callout.classList.add("active");
+        if (leader) leader.style.opacity = "1";
+        modules.forEach(m => {
+          if (m.getAttribute("data-target") === target) {
+            m.classList.add("highlighted");
+          }
+        });
+      });
+
+      callout.addEventListener("mouseleave", () => {
+        callout.classList.remove("active");
+        if (leader) leader.style.opacity = "";
+        modules.forEach(m => m.classList.remove("highlighted"));
+      });
+    });
+
+    // Hover from Module to Callout
+    modules.forEach(m => {
+      const target = m.getAttribute("data-target");
+      m.addEventListener("mouseenter", () => {
+        callouts.forEach(c => {
+          if (c.getAttribute("data-target") === target) {
+            c.classList.add("active");
+          }
+        });
+      });
+      m.addEventListener("mouseleave", () => {
+        callouts.forEach(c => c.classList.remove("active"));
+      });
+    });
+  </script>
+</body>
+</html>
